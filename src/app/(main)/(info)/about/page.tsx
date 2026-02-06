@@ -185,7 +185,7 @@ export default function AboutPage() {
         {[
           { label: "Years Experience", value: "25+" },
           { label: "Partner Universities", value: "500+" },
-          { label: "Visa Success Rate", value: "98%" },
+          { label: "Visa Success Rate", value: "97%" },
           { label: "Students Placed", value: "10,000+" }
         ].map((stat, i) => (
           <div key={i} className="text-center">
