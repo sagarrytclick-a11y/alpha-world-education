@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Phone, Mail, MapPin, ChevronDown, ChevronRight, AlertCircle, RefreshCw } from "lucide-react";
+import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw, MapPin, ChevronDown, AlertCircle, ChevronRight, X, Menu } from 'lucide-react';
 import { usePathname } from "next/navigation";
 import { SITE_IDENTITY } from "@/site-identity";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -19,6 +19,8 @@ export default function Navbar() {
   const [expandedMobileItem, setExpandedMobileItem] = useState<string | null>(null);
   const [expandedMobileCountry, setExpandedMobileCountry] = useState<string | null>(null);
   const [showMobileColleges, setShowMobileColleges] = useState<string | null>(null);
+  const [collegeSearch, setCollegeSearch] = useState('');
+  const [countryCollegeSearch, setCountryCollegeSearch] = useState('');
   const { emails, phones, address } = useContactInfo();
   const pathname = usePathname();
   const { openModal } = useFormModal();
@@ -27,6 +29,16 @@ export default function Navbar() {
   // Use TanStack Query for country-specific colleges
   const { data: countryColleges = [], isLoading: loadingColleges, error: countryCollegesError } = useCountryColleges(hoveredCountry);
   const { data: mobileCountryColleges = [], isLoading: mobileLoadingColleges, error: mobileCountryCollegesError } = useCountryColleges(expandedMobileCountry);
+
+  // Filter colleges based on search
+  const filteredColleges = colleges.filter(college => 
+    college.name.toLowerCase().includes(collegeSearch.toLowerCase())
+  );
+
+  // Filter country colleges based on search
+  const filteredCountryColleges = countryColleges.filter(college => 
+    college.name.toLowerCase().includes(countryCollegeSearch.toLowerCase())
+  );
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -84,7 +96,7 @@ export default function Navbar() {
       <div className="border-b border-slate-100">
         <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
           <div className="flex h-20 lg:h-24 items-center justify-between">
-            <Link href="/" className="flex-shrink-0"><img src={SITE_IDENTITY.assets.logo.main} alt="Logo" width={60} height={60} className="hover:opacity-80 transition-opacity" /></Link>
+            <Link href="/" className="flex-shrink-0"><img src={SITE_IDENTITY.assets.logo.main} alt="Logo" width={80} height={80} className="hover:opacity-80 transition-opacity" /></Link>
 
             {/* DESKTOP NAVIGATION */}
             <nav className="hidden lg:flex items-center space-x-2">
@@ -93,7 +105,17 @@ export default function Navbar() {
                   key={item.name}
                   className="relative py-2"
                   onMouseEnter={() => setHoveredItem(item.name)}
-                  onMouseLeave={() => { setHoveredItem(null); setHoveredCountry(null); }}
+                  onMouseLeave={() => { 
+                    setHoveredItem(null); 
+                    setHoveredCountry(null);
+                    // Clear search when dropdown closes
+                    if (item.name === 'Colleges') {
+                      setCollegeSearch('');
+                    }
+                    if (item.name === 'Countries') {
+                      setCountryCollegeSearch('');
+                    }
+                  }}
                 >
                   <Link href={item.href} className={`px-4 py-3 text-base font-semibold rounded-xl flex items-center gap-2 transition-all duration-200 ${isActive(item.href) ? "text-green-600 bg-green-50 shadow-sm" : "text-slate-700 hover:text-green-600 hover:bg-slate-50"}`}>
                     {item.name}
@@ -102,7 +124,7 @@ export default function Navbar() {
 
                   {/* MAIN DROPDOWN - TWO COLUMN LAYOUT */}
                   {item.hasDropdown && hoveredItem === item.name && (
-                    <div className={`absolute top-full left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[60] max-h-[60vh] overflow-x-auto overflow-y-hidden ${item.name === 'Countries' ? 'w-[40rem] max-w-[80vw]' : 'w-64 max-w-[90vw]'}`}>
+                    <div className={`absolute top-full left-1/2 transform -translate-x-1/2 bg-white rounded-xl shadow-xl border border-slate-100 py-2 z-[60] ${item.name === 'Countries' ? 'w-[40rem] max-w-[80vw]' : 'w-80 max-w-[90vw]'}`}>
                       {loading && (item.name === 'Colleges' || item.name === 'Exams') ? (
                         <div className="px-6 py-4 text-slate-500 text-center">Loading...</div>
                       ) : error ? (
@@ -149,6 +171,28 @@ export default function Navbar() {
                                 <span className="text-sm font-bold text-slate-600 uppercase tracking-wider">Available Universities</span>
                               </div>
 
+                              {/* Search Bar for Country Colleges */}
+                              <div className="px-2 pb-3 sticky top-8 bg-white z-10">
+                                <div className="relative">
+                                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                  <input
+                                    type="text"
+                                    placeholder="Search universities..."
+                                    value={countryCollegeSearch}
+                                    onChange={(e) => setCountryCollegeSearch(e.target.value)}
+                                    className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                  />
+                                  {countryCollegeSearch && (
+                                    <button
+                                      onClick={() => setCountryCollegeSearch('')}
+                                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+
                               <div className="px-2">
                                 {loadingColleges ? (
                                   <div className="px-4 py-3 text-sm text-slate-500 flex items-center gap-2 justify-center">
@@ -161,12 +205,18 @@ export default function Navbar() {
                                     <p className="text-sm font-medium">Failed to load universities</p>
                                     <p className="text-xs mt-1">Please try again</p>
                                   </div>
-                                ) : countryColleges.length > 0 ? (
-                                  countryColleges.map((college) => (
+                                ) : filteredCountryColleges.length > 0 ? (
+                                  filteredCountryColleges.map((college) => (
                                     <Link key={college._id} href={`/colleges/${college.slug}`} className="block px-3 py-2 rounded-lg hover:bg-green-50/50 group/college transition-all duration-200 mb-1">
                                       <div className="font-bold text-sm text-slate-800 group-hover/college:text-green-700 transition-colors">{college.name}</div>
                                     </Link>
                                   ))
+                                ) : countryCollegeSearch ? (
+                                  <div className="px-4 py-8 text-center text-slate-500">
+                                    <Search className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                                    <p className="text-sm font-medium">No universities found</p>
+                                    <p className="text-xs mt-1">Try adjusting your search</p>
+                                  </div>
                                 ) : (
                                   <div className="px-4 py-8 text-center text-slate-400">
                                     <p className="text-sm font-medium">No universities found for this region.</p>
@@ -187,15 +237,49 @@ export default function Navbar() {
                         </div>
                       ) : (
                         // SINGLE COLUMN FOR OTHER DROPDOWNS (Colleges, Exams)
-                        <div className="overflow-y-auto custom-scrollbar max-h-[55vh]">
-                          {dropdownContent[item.name as keyof typeof dropdownContent].map((dropdownItem: any) => (
-                            <Link key={dropdownItem.title} href={dropdownItem.href} className="flex items-center justify-between px-4 py-2 text-sm font-bold text-slate-700 hover:bg-green-50 hover:text-green-600 transition-colors">
+                        <div className="overflow-y-auto custom-scrollbar max-h-[60vh]">
+                          {/* Search Bar for Colleges */}
+                          {item.name === 'Colleges' && (
+                            <div className="sticky top-0 bg-white z-10 p-3 border-b border-slate-100">
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                                <input
+                                  type="text"
+                                  placeholder="Search colleges..."
+                                  value={collegeSearch}
+                                  onChange={(e) => setCollegeSearch(e.target.value)}
+                                  className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                />
+                                {collegeSearch && (
+                                  <button
+                                    onClick={() => setCollegeSearch('')}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          
+                          {/* College List */}
+                          {(item.name === 'Colleges' ? filteredColleges : dropdownContent[item.name as keyof typeof dropdownContent]).map((dropdownItem: any) => (
+                            <Link key={dropdownItem.title || dropdownItem.name} href={dropdownItem.href || `/colleges/${dropdownItem.slug}`} className="flex items-center justify-between px-4 py-2 text-sm font-bold text-slate-700 hover:bg-green-50 hover:text-green-600 transition-colors whitespace-nowrap">
                               <span className="flex items-center gap-2">
                                 {dropdownItem.flag && <span className="text-lg">{dropdownItem.flag}</span>}
-                                <span className="font-bold">{dropdownItem.title}</span>
+                                <span className="font-bold">{dropdownItem.title || dropdownItem.name}</span>
                               </span>
                             </Link>
                           ))}
+                          
+                          {/* No Results Message */}
+                          {item.name === 'Colleges' && filteredColleges.length === 0 && collegeSearch && (
+                            <div className="px-4 py-8 text-center text-slate-500">
+                              <Search className="h-8 w-8 mx-auto mb-2 text-slate-300" />
+                              <p className="text-sm font-medium">No colleges found</p>
+                              <p className="text-xs mt-1">Try adjusting your search</p>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
