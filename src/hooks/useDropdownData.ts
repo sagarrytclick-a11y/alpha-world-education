@@ -29,7 +29,7 @@ interface DropdownData {
 }
 
 const fetchColleges = async (): Promise<College[]> => {
-  const response = await fetch('/api/colleges')
+  const response = await fetch('/api/colleges?limit=1000')
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
@@ -37,7 +37,7 @@ const fetchColleges = async (): Promise<College[]> => {
   if (!result.success) {
     throw new Error(result.message || 'Failed to fetch colleges')
   }
-  return result.data.colleges?.slice(0, 8) || []
+  return result.data.colleges || []
 }
 
 const fetchExams = async (): Promise<Exam[]> => {
