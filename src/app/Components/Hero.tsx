@@ -1,132 +1,150 @@
 "use client";
 
 import React from 'react';
-import { Check, ArrowRight, Play, Star, ShieldCheck, GraduationCap, Globe2, BookOpen } from 'lucide-react';
+import { ArrowRight, Play, Star, ShieldCheck, GraduationCap, Sparkles, CheckCircle2, Globe2 } from 'lucide-react';
 import Link from 'next/link';
+import { useFormModal } from '@/context/FormModalContext';
 
 const Hero: React.FC = () => {
+  const { openModal } = useFormModal();
+
   return (
-    <section id="home" className="relative min-h-screen flex items-center bg-white pt-20 pb-16 sm:pt-15 sm:pb-15 overflow-hidden">
+    <section id="home" className="relative min-h-[90vh] lg:min-h-screen flex items-center bg-[#FDFDFD] pt-28 pb-20 overflow-hidden">
       
-      {/* Subtle Background Elements to fill white space */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-slate-50/50 hidden lg:block -skew-x-6 translate-x-32" />
-      <div className="absolute top-40 left-10 w-64 h-64 bg-green-50 rounded-full blur-[100px] -z-10" />
+      {/* --- ELITE BACKGROUND DESIGN --- */}
+      <div className="absolute inset-0 overflow-hidden -z-10">
+        {/* Animated Mesh Gradient */}
+        <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-gradient-to-br from-green-50 to-emerald-50/50 rounded-full blur-[120px] animate-pulse" />
+        <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-gradient-to-tr from-blue-50 to-indigo-50/30 rounded-full blur-[100px]" />
+        
+        {/* Sophisticated Grid Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
+      </div>
 
       <div className="container mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-          {/* LEFT COLUMN (7/12) - More Text & Info */}
+          {/* LEFT COLUMN: Content */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
             
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-50 border border-green-100 mb-6">
-              <ShieldCheck size={16} className="text-green-600" />
-              <span className="text-xs font-black text-green-700 uppercase tracking-widest">Study Abroad Consultancy</span>
-            </div>
-
-            {/* Main Heading */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl xl:text-7xl font-black text-slate-900 leading-[1.05] tracking-tight mb-6">
-              Your Dream University <br />
-              <span className="relative inline-block text-green-600">
-                Awaits You
-                <svg className="absolute -bottom-2 left-0 w-full" viewBox="0 0 358 12" fill="none">
-                  <path d="M3 9C118.5 3 234 3 355 9" stroke="#16A34A" strokeWidth="6" strokeLinecap="round"/>
-                </svg>
-              </span>
-            </h1>
-
-            {/* Subtext */}
-            <p className="text-base sm:text-lg text-slate-500 max-w-xl leading-relaxed font-medium mb-8">
-              Complete study abroad guidance from <span className="text-slate-900 font-bold">university selection to visa approval</span>. 
-              We help you get admitted to top universities in 50+ countries.
-            </p>
-
-            {/* Service Categories */}
-            <div className="mb-10">
-              <div className="text-xs font-black text-slate-400 uppercase tracking-wider mb-4">Our Services Include</div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-4 sm:gap-x-8 w-full max-w-lg">
-                {[
-                  { icon: BookOpen, text: "University Admissions" },
-                  { icon: ShieldCheck, text: "Visa Application Support" },
-                  { icon: GraduationCap, text: "Scholarship Guidance" },
-                  { icon: Globe2, text: "Pre-Departure Briefing" }
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <div className="bg-green-100 p-2 rounded-lg">
-                      <item.icon size={14} className="text-green-600" strokeWidth={2.5} />
-                    </div>
-                    <span className="text-sm font-bold text-slate-700">{item.text}</span>
+            {/* Ultra-Modern Trust Badge */}
+            <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 mb-8 transition-transform hover:scale-105">
+              <div className="flex -space-x-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-slate-${i+1}00 shadow-sm overflow-hidden`}>
+                    <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="student" />
                   </div>
                 ))}
               </div>
+              <p className="text-[13px] font-bold text-slate-700 ml-2">
+                <span className="text-green-600">1,200+</span> students joined already
+              </p>
+              <div className="ml-2 w-2 h-2 rounded-full bg-green-500 animate-ping" />
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-5 mb-8 sm:mb-12 w-full sm:w-auto">
-              <Link href="/countries" className="group w-full sm:w-auto px-8 sm:px-10 py-4 sm:py-5 bg-green-600 text-white font-bold rounded-2xl hover:bg-green-700 transition-all shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base">
-                <GraduationCap className="w-4 h-4" />
-                Find Your University 
-                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+            {/* Cinematic Heading */}
+            <h1 className="text-5xl sm:text-7xl xl:text-[90px] font-black text-slate-900 leading-[0.9] tracking-tight mb-8">
+              Your Future <br />
+              <span className="relative">
+                Without Limits
+                <span className="absolute -bottom-2 left-0 w-full h-3 bg-green-400/20 -z-10 rounded-full" />
+              </span>
+            </h1>
+
+            <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 max-w-2xl">
+              <p className="text-lg text-slate-500 leading-relaxed font-medium">
+                We don’t just process applications; we architect <span className="text-slate-900 font-bold">global careers</span> through personalized university placement and end-to-end visa strategy.
+              </p>
+            </div>
+
+            {/* High-Conversion CTA Group */}
+            <div className="flex flex-wrap items-center justify-center lg:justify-start gap-5 mb-14">
+              <Link href="/countries" className="relative group px-10 py-5 bg-green-600 text-white font-bold rounded-2xl overflow-hidden transition-all hover:shadow-[0_20px_40px_-15px_rgba(22,163,74,0.4)] hover:-translate-y-1">
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                <span className="relative flex items-center gap-2">
+                  Find Your University <ArrowRight size={20} />
+                </span>
               </Link>
 
-              <button className="group flex items-center gap-3 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl border border-slate-100 hover:bg-slate-50 transition-colors">
-                <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600 group-hover:scale-110 transition-transform">
-                  <Play size={16} fill="currentColor" />
-                </div>
-                <span className="text-xs sm:text-sm font-bold text-slate-900">Free Consultation</span>
+              <button onClick={openModal} className="flex items-center gap-4 px-8 py-5 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all hover:shadow-xl">
+                 <Play size={18} fill="currentColor" className="text-green-400" />
+                 Get Free Roadmap
               </button>
             </div>
 
-            {/* Bottom Mini-Stats */}
-            <div className="flex items-center gap-4 sm:gap-8 pt-6 sm:pt-8 border-t border-slate-100 w-full justify-center lg:justify-start">
-               <div className="flex flex-col">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900">15,000+</span>
-                  <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Students Helped</span>
-               </div>
-               <div className="flex flex-col border-x border-slate-100 px-4 sm:px-8">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900">800+</span>
-                  <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Partner Universities</span>
-               </div>
-               <div className="flex flex-col">
-                  <span className="text-xl sm:text-2xl font-black text-slate-900">98%</span>
-                  <span className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Success Rate</span>
-               </div>
+            {/* Premium Stat Cards */}
+            <div className="flex flex-wrap justify-center lg:justify-start gap-10">
+              {[
+                { label: "Success Rate", val: "99.2%", icon: CheckCircle2 },
+                { label: "Partner Institutions", val: "850+", icon: GraduationCap },
+                { label: "Countries", val: "40+", icon: Globe2 }
+              ].map((stat, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <div className="p-2 bg-slate-50 rounded-xl border border-slate-100">
+                    <stat.icon size={20} className="text-slate-400" />
+                  </div>
+                  <div>
+                    <div className="text-xl font-black text-slate-900">{stat.val}</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* RIGHT COLUMN (5/12) - Balanced Image Size */}
-          <div className="lg:col-span-5 relative flex justify-center lg:justify-end mt-8 lg:mt-0">
-            <div className="relative w-full max-w-[350px] sm:max-w-[450px]">
+          {/* RIGHT COLUMN: The Visual Composition */}
+          <div className="lg:col-span-5 relative mt-12 lg:mt-0">
+            <div className="relative w-full max-w-[500px] mx-auto">
               
-              {/* Image with Decorative Frame */}
-              <div className="relative z-10 rounded-[2rem] sm:rounded-[3rem] overflow-hidden border-[6px] sm:border-[10px] border-white shadow-2xl rotate-2 aspect-[4/5]">
-                <img
-                  src="/Hero/herosection.png"
-                  alt="Student Success"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              {/* Success Badge (Smaller & Clean) */}
-              <div className="absolute -top-4 sm:-top-6 -right-4 sm:-right-6 bg-white z-[10] p-3 sm:p-4 rounded-2xl sm:rounded-3xl shadow-xl border border-slate-50 flex flex-col items-center animate-bounce-slow">
-                 <div className="bg-green-100 p-1.5 sm:p-2 rounded-full mb-2">
-                    <Star size={20} className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="currentColor" />
-                 </div>
-                 <span className="text-lg sm:text-xl font-black text-slate-900 leading-none">98%</span>
-                 <span className="text-[7px] sm:text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Visa Success</span>
-              </div>
-
-              {/* Next Intake Box (Smaller & Clean) */}
-              <div className="absolute -bottom-6 sm:-bottom-8 -left-6 sm:-left-8 bg-slate-900 text-white p-4 sm:p-5 rounded-2xl sm:rounded-3xl shadow-2xl w-40 sm:w-48 z-[10]">
-                <p className="text-[8px] sm:text-[9px] text-green-400 font-bold uppercase mb-2">Upcoming Intake</p>
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-medium text-xs">Sept 2026</span>
-                  <span className="bg-green-600 px-1.5 sm:px-2 py-0.5 rounded-full text-[7px] sm:text-[8px] font-black uppercase">Active</span>
+              {/* The "Main Stage" - Large Image with Organic Shape */}
+              <div className="relative z-10 group">
+                <div className="absolute -inset-4 bg-gradient-to-tr from-green-200 to-blue-200 rounded-[4rem] blur-2xl opacity-30 group-hover:opacity-50 transition-opacity" />
+                
+                <div className="relative rounded-[3.5rem] border-[12px] border-white shadow-2xl overflow-hidden aspect-[1/1.2]">
+                  <img
+                    src="/Hero/herosection.png"
+                    alt="International Student"
+                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  />
+                  
+                  {/* Glass Card Over Image */}
+                  <div className="absolute bottom-6 left-6 right-6 p-6 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/30 text-white">
+                    <div className="flex justify-between items-end">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Upcoming Deadline</p>
+                        <h4 className="text-xl font-black">Sept 2026 Intake</h4>
+                      </div>
+                      <div className="px-3 py-1 bg-green-500 rounded-full text-[10px] font-black uppercase tracking-tighter">
+                        Limited Slots
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Grid Background behind image */}
-              <div className="absolute -inset-10 bg-[radial-gradient(#e2e8f0_1.5px,transparent_1.5px)] [background-size:20px_20px] opacity-70 -z-10 translate-x-4 translate-y-4" />
+              {/* Floaties: Designed to look like UI elements */}
+              <div className="absolute -top-10 -right-10 z-20 animate-float">
+                <div className="bg-white p-4 rounded-3xl shadow-2xl border border-slate-50 flex items-center gap-4">
+                  <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
+                    <Star size={24} className="text-amber-500 fill-amber-500" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-black text-slate-900 leading-none">4.9/5</div>
+                    <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Student Rating</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Decorative Geometric Elements */}
+              <div className="absolute -bottom-6 -left-10 z-20 bg-slate-900 text-white p-5 rounded-3xl shadow-2xl rotate-[-4deg] animate-float-delayed">
+                <div className="flex items-center gap-3">
+                   <div className="p-2 bg-green-500 rounded-lg">
+                    <ShieldCheck size={18} />
+                   </div>
+                   <span className="text-sm font-bold tracking-tight">ISO Certified Consultancy</span>
+                </div>
+              </div>
+
             </div>
           </div>
 
@@ -134,12 +152,19 @@ const Hero: React.FC = () => {
       </div>
 
       <style jsx>{`
-        @keyframes bounce-slow {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-10px); }
+        @keyframes float {
+          0%, 100% { transform: translateY(0px) rotate(0deg); }
+          50% { transform: translateY(-20px) rotate(2deg); }
         }
-        .animate-bounce-slow {
-          animation: bounce-slow 4s ease-in-out infinite;
+        @keyframes float-delayed {
+          0%, 100% { transform: translateY(0px) rotate(-4deg); }
+          50% { transform: translateY(15px) rotate(-2deg); }
+        }
+        .animate-float {
+          animation: float 5s ease-in-out infinite;
+        }
+        .animate-float-delayed {
+          animation: float-delayed 6s ease-in-out infinite;
         }
       `}</style>
     </section>

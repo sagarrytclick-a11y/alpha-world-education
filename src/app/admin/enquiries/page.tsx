@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState, useMemo } from 'react'
-import { AdminTable, createViewAction, createDeleteAction } from '@/components/admin/AdminTable'
+import { AdminTable, createViewAction, createDeleteAction, createEditAction } from '@/components/admin/AdminTable'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MessageSquare, Search, Eye, Mail, Phone, Calendar } from 'lucide-react'
-import { useAdminEnquiries, useDeleteEnquiry } from '@/hooks/useAdminEnquiries'
+import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw } from 'lucide-react'
+import { useAdminEnquiries, useDeleteEnquiry, useUpdateEnquiryStatus } from '@/hooks/useAdminEnquiries'
 import { Enquiry } from '@/hooks/useAdminEnquiries'
 
 export default function EnquiriesPage() {
@@ -27,8 +27,9 @@ export default function EnquiriesPage() {
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
   
   // API hooks
-  const { data: enquiries = [], isLoading: dataLoading } = useAdminEnquiries()
+  const { data: enquiries = [], isLoading: dataLoading, refetch } = useAdminEnquiries()
   const deleteEnquiryMutation = useDeleteEnquiry()
+  const updateEnquiryStatusMutation = useUpdateEnquiryStatus()
 
   // Filter enquiries based on search, status, and priority using useMemo
   const filteredEnquiries = useMemo(() => {
@@ -63,6 +64,7 @@ export default function EnquiriesPage() {
           <div className="font-medium text-gray-900">{value}</div>
           <div className="text-sm text-gray-500">{record.email}</div>
           <div className="text-sm text-gray-500">{record.phone}</div>
+          <div className="text-sm text-gray-500">{record.city}</div>
         </div>
       )
     },
@@ -95,19 +97,56 @@ export default function EnquiriesPage() {
     {
       key: 'status' as keyof Enquiry,
       title: 'Status',
-      render: (value: string) => {
-        const colors = {
-          pending: 'bg-gray-100 text-gray-800 border-gray-200',
-          'in-progress': 'bg-blue-100 text-blue-800 border-blue-200',
-          resolved: 'bg-green-100 text-green-800 border-green-200',
-          closed: 'bg-slate-100 text-slate-800 border-slate-200'
-        }
-        return (
-          <Badge className={`border ${colors[value as keyof typeof colors] || colors.pending}`}>
-            {value}
-          </Badge>
-        )
-      }
+      render: (value: string, record: Enquiry) => (
+        <Select 
+          value={value} 
+          onValueChange={(newStatus) => handleStatusChange(record._id, newStatus)}
+          disabled={updateEnquiryStatusMutation.isPending}
+        >
+          <SelectTrigger className={`w-32 ${updateEnquiryStatusMutation.isPending ? 'opacity-50' : ''}`}>
+            <SelectValue>
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  value === 'pending' ? 'bg-gray-500' :
+                  value === 'in-progress' ? 'bg-blue-500' :
+                  value === 'resolved' ? 'bg-green-500' :
+                  'bg-slate-500'
+                }`}></div>
+                <span className="text-xs">{value}</span>
+                {updateEnquiryStatusMutation.isPending && (
+                  <div className="w-3 h-3 border border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                )}
+              </div>
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="pending">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                <span className="text-xs">Pending</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="in-progress">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                <span className="text-xs">In Progress</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="resolved">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-xs">Resolved</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="closed">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
+                <span className="text-xs">Closed</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      )
     },
     {
       key: 'createdAt' as keyof Enquiry,
@@ -147,6 +186,31 @@ export default function EnquiriesPage() {
     }
   }
 
+  const handleStatusChange = async (enquiryId: string, newStatus: string) => {
+    try {
+      console.log(`🔄 [FRONTEND] Changing status for enquiry ${enquiryId} to ${newStatus}`);
+      
+      await updateEnquiryStatusMutation.mutateAsync({ 
+        id: enquiryId, 
+        status: newStatus 
+      })
+      
+      // Update the selected enquiry if it's currently open in modal
+      if (selectedEnquiry && selectedEnquiry._id === enquiryId) {
+        setSelectedEnquiry(prev => prev ? { ...prev, status: newStatus as any } : null)
+      }
+      
+      // Force a refresh to ensure table is updated
+      setTimeout(() => {
+        refetch()
+      }, 500)
+      
+      console.log(`✅ [FRONTEND] Status changed successfully for ${enquiryId}`);
+    } catch (error) {
+      console.error('❌ [FRONTEND] Status change error:', error)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -155,6 +219,15 @@ export default function EnquiriesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Enquiries</h1>
           <p className="text-gray-600">Manage student enquiries and support requests</p>
         </div>
+        <Button
+          onClick={() => refetch()}
+          variant="outline"
+          disabled={dataLoading}
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className={`h-4 w-4 ${dataLoading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
       </div>
 
       {/* Filters */}
@@ -240,6 +313,13 @@ export default function EnquiriesPage() {
                 </div>
               </div>
               <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">City</label>
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="h-4 w-4 text-gray-400" />
+                  <span>{selectedEnquiry.city}</span>
+                </div>
+              </div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Source</label>
                 <Badge variant="outline">{selectedEnquiry.source}</Badge>
               </div>
@@ -266,14 +346,40 @@ export default function EnquiriesPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Status</label>
-                <Badge className={
-                  selectedEnquiry.status === 'pending' ? 'bg-gray-100 text-gray-800 border-gray-200' :
-                  selectedEnquiry.status === 'in-progress' ? 'bg-blue-100 text-blue-800 border-blue-200' :
-                  selectedEnquiry.status === 'resolved' ? 'bg-green-100 text-green-800 border-green-200' :
-                  'bg-slate-100 text-slate-800 border-slate-200'
-                }>
-                  {selectedEnquiry.status}
-                </Badge>
+                <Select 
+                  value={selectedEnquiry.status} 
+                  onValueChange={(value) => handleStatusChange(selectedEnquiry._id, value)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pending">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-gray-500 rounded-full"></div>
+                        Pending
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="in-progress">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        In Progress
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="resolved">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        Resolved
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="closed">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-slate-500 rounded-full"></div>
+                        Closed
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Priority</label>

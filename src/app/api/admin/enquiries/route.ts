@@ -23,6 +23,7 @@ export async function GET() {
       name: enquiry.name,
       email: enquiry.email,
       phone: enquiry.phone,
+      city: enquiry.city,
       subject: enquiry.subject,
       message: enquiry.message,
       status: enquiry.status,
