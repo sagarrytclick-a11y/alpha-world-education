@@ -7,12 +7,13 @@ export interface Enquiry {
   name: string
   email: string
   phone: string
+  city: string
   subject: string
   message: string
   status: 'pending' | 'in-progress' | 'resolved' | 'closed'
   priority: 'low' | 'medium' | 'high' | 'urgent'
   source: 'contact-form' | 'website' | 'email' | 'phone' | 'other'
-  assignedTo?: string
+  assignedTo?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -39,7 +40,43 @@ export function useAdminEnquiries() {
   })
 }
 
-// Hook for deleting an enquiry
+// Hook for updating enquiry status
+export function useUpdateEnquiryStatus() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }): Promise<void> => {
+      console.log(`🔄 [HOOK] Updating enquiry status: ${id} -> ${status}`);
+      
+      const response = await fetch(`/api/admin/enquiries/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status }),
+      })
+      
+      console.log(`📡 [HOOK] Response status: ${response.status}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        console.error(`❌ [HOOK] Error response:`, errorData);
+        throw new Error(errorData.error || 'Failed to update enquiry status')
+      }
+      
+      const result = await response.json();
+      console.log(`✅ [HOOK] Success response:`, result);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-enquiries'] })
+      toast.success('Enquiry status updated successfully!')
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || 'Failed to update enquiry status')
+      console.error('Update enquiry status error:', error)
+    },
+  })
+}
 export function useDeleteEnquiry() {
   const queryClient = useQueryClient()
   
