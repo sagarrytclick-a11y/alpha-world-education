@@ -21,6 +21,8 @@ export default function Navbar() {
   const [showMobileColleges, setShowMobileColleges] = useState<string | null>(null);
   const [collegeSearch, setCollegeSearch] = useState('');
   const [countryCollegeSearch, setCountryCollegeSearch] = useState('');
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [showMobileSearchResults, setShowMobileSearchResults] = useState(false);
   const { emails, phones, address } = useContactInfo();
   const pathname = usePathname();
   const { openModal } = useFormModal();
@@ -39,6 +41,16 @@ export default function Navbar() {
   const filteredCountryColleges = countryColleges.filter(college => 
     college.name.toLowerCase().includes(countryCollegeSearch.toLowerCase())
   );
+
+  // Mobile search results for colleges and exams
+  const mobileSearchResults = {
+    colleges: colleges.filter(college => 
+      college.name.toLowerCase().includes(mobileSearchQuery.toLowerCase())
+    ),
+    exams: exams.filter(exam => 
+      exam.short_name.toLowerCase().includes(mobileSearchQuery.toLowerCase())
+    )
+  };
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
@@ -302,6 +314,130 @@ export default function Navbar() {
       {/* MOBILE MENU */}
       <div className={`lg:hidden bg-white transition-all duration-300 ${isOpen ? "max-h-[calc(100vh-100px)] opacity-100 overflow-y-auto" : "max-h-0 opacity-0 overflow-hidden"}`}>
         <div className="px-8 py-8 space-y-2">
+          {/* MOBILE SEARCH BAR */}
+          <div className="mb-6">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <input
+                type="text"
+                placeholder="Search colleges and exams..."
+                value={mobileSearchQuery}
+                onChange={(e) => {
+                  setMobileSearchQuery(e.target.value);
+                  setShowMobileSearchResults(e.target.value.length > 0);
+                }}
+                onFocus={() => setShowMobileSearchResults(mobileSearchQuery.length > 0)}
+                className="w-full pl-12 pr-12 py-4 text-base border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-slate-50"
+              />
+              {mobileSearchQuery && (
+                <button
+                  onClick={() => {
+                    setMobileSearchQuery('');
+                    setShowMobileSearchResults(false);
+                  }}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              )}
+            </div>
+            
+            {/* MOBILE SEARCH RESULTS */}
+            {showMobileSearchResults && mobileSearchQuery && (
+              <div className="mt-4 bg-white border border-slate-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
+                {loading ? (
+                  <div className="px-6 py-8 text-center text-slate-500">
+                    <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+                    <span className="text-sm font-medium">Searching...</span>
+                  </div>
+                ) : mobileSearchResults.colleges.length > 0 || mobileSearchResults.exams.length > 0 ? (
+                  <div>
+                    {/* COLLEGES SECTION */}
+                    {mobileSearchResults.colleges.length > 0 && (
+                      <div className="border-b border-slate-100">
+                        <div className="px-4 py-3 bg-green-50 border-b border-green-100">
+                          <span className="text-sm font-bold text-green-700 uppercase tracking-wider">Colleges ({mobileSearchResults.colleges.length})</span>
+                        </div>
+                        {mobileSearchResults.colleges.slice(0, 5).map((college) => (
+                          <Link
+                            key={college._id}
+                            href={`/colleges/${college.slug}`}
+                            onClick={() => {
+                              setIsOpen(false);
+                              setShowMobileSearchResults(false);
+                              setMobileSearchQuery('');
+                            }}
+                            className="block px-4 py-3 hover:bg-green-50 transition-colors border-b border-slate-50"
+                          >
+                            <div className="font-semibold text-sm text-slate-800">{college.name}</div>
+                          </Link>
+                        ))}
+                        {mobileSearchResults.colleges.length > 5 && (
+                          <div className="px-4 py-2 bg-slate-50">
+                            <Link
+                              href={`/colleges?search=${encodeURIComponent(mobileSearchQuery)}`}
+                              onClick={() => {
+                                setIsOpen(false);
+                                setShowMobileSearchResults(false);
+                                setMobileSearchQuery('');
+                              }}
+                              className="text-xs font-bold text-green-600 hover:text-green-700"
+                            >
+                              View all {mobileSearchResults.colleges.length} colleges →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* EXAMS SECTION */}
+                    {mobileSearchResults.exams.length > 0 && (
+                      <div>
+                        <div className="px-4 py-3 bg-blue-50 border-b border-blue-100">
+                          <span className="text-sm font-bold text-blue-700 uppercase tracking-wider">Exams ({mobileSearchResults.exams.length})</span>
+                        </div>
+                        {mobileSearchResults.exams.slice(0, 5).map((exam) => (
+                          <Link
+                            key={exam._id}
+                            href={`/exams/${exam.slug}`}
+                            onClick={() => {
+                              setIsOpen(false);
+                              setShowMobileSearchResults(false);
+                              setMobileSearchQuery('');
+                            }}
+                            className="block px-4 py-3 hover:bg-blue-50 transition-colors border-b border-slate-50"
+                          >
+                            <div className="font-semibold text-sm text-slate-800">{exam.short_name}</div>
+                          </Link>
+                        ))}
+                        {mobileSearchResults.exams.length > 5 && (
+                          <div className="px-4 py-2 bg-slate-50">
+                            <Link
+                              href={`/exams?search=${encodeURIComponent(mobileSearchQuery)}`}
+                              onClick={() => {
+                                setIsOpen(false);
+                                setShowMobileSearchResults(false);
+                                setMobileSearchQuery('');
+                              }}
+                              className="text-xs font-bold text-blue-600 hover:text-blue-700"
+                            >
+                              View all {mobileSearchResults.exams.length} exams →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="px-6 py-8 text-center text-slate-500">
+                    <Search className="h-10 w-10 mx-auto mb-3 text-slate-300" />
+                    <p className="text-sm font-medium">No results found</p>
+                    <p className="text-xs mt-1">Try different keywords</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {navItems.map((item) => (
             <div key={item.name}>
               {item.hasDropdown ? (

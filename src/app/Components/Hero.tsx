@@ -43,13 +43,13 @@ const Hero: React.FC = () => {
             </div>
 
             {/* Cinematic Heading */}
-            <h1 className="text-5xl sm:text-7xl xl:text-[90px] font-black text-slate-900 leading-[0.9] tracking-tight mb-8">
-              Your Future <br />
-              <span className="relative">
-                Without Limits
-                <span className="absolute -bottom-2 left-0 w-full h-3 bg-green-400/20 -z-10 rounded-full" />
-              </span>
-            </h1>
+            <h1 className="text-5xl sm:text-6xl xl:text-[70px] font-black text-slate-900 leading-[0.9] tracking-tight mb-8">
+  Study Abroad. <br />
+  <span className="relative">
+    No Compromise.
+    <span className="absolute -bottom-2 left-0 w-full h-3 bg-green-400/20 -z-10 rounded-full" />
+  </span>
+</h1>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 max-w-2xl">
               <p className="text-lg text-slate-500 leading-relaxed font-medium">
