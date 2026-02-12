@@ -387,7 +387,7 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
                   }
                 }}
                 className={`flex items-center gap-2 px-4 sm:px-4 md:px-4 lg:px-6 py-2.5 text-sm font-semibold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap group relative overflow-hidden shrink-0 min-w-max ${activeTab === tab.id
-                    && 'text-white bg-green-600 border border-green-200'
+                  && 'text-white bg-green-600 border border-green-200'
                   }`}
               >
                 <span className="relative z-10 text-sm">
@@ -826,22 +826,34 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
                           label: "Country Ranking",
                           sub: "National Excellence",
                           icon: Trophy,
-                          color: "yellow"
+                          // Color classes ko yahan map kar diya
+                          theme: {
+                            bgHover: "group-hover:bg-yellow-600",
+                            iconText: "text-yellow-600",
+                            numberText: "text-yellow-600/20",
+                            numberHover: "group-hover:text-yellow-600/10"
+                          }
                         },
                         {
                           val: typeof college.ranking === 'object' ? college.ranking.world_ranking : undefined,
                           label: "World Ranking",
                           sub: "Global Standing",
                           icon: Globe2,
-                          color: "blue"
+                          theme: {
+                            bgHover: "group-hover:bg-blue-600",
+                            iconText: "text-blue-600",
+                            numberText: "text-blue-600/20",
+                            numberHover: "group-hover:text-blue-600/10"
+                          }
                         }
                       ].map((item, i) => item.val && (
                         <div key={i} className="group relative bg-slate-50 rounded-[2rem] p-8 transition-all duration-500 hover:bg-white hover:shadow-xl hover:-translate-y-1 border border-transparent hover:border-slate-100">
                           <div className="flex items-center justify-between mb-4">
-                            <div className={`w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm group-hover:bg-${item.color}-600 transition-all duration-300`}>
-                              <item.icon className={`w-7 h-7 text-${item.color}-600 group-hover:text-white transition-colors`} />
+                            {/* Yahan item.theme use kiya hai */}
+                            <div className={`w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-sm ${item.theme.bgHover} transition-all duration-300`}>
+                              <item.icon className={`w-7 h-7 ${item.theme.iconText} group-hover:text-white transition-colors`} />
                             </div>
-                            <div className={`text-5xl font-black text-${item.color}-600/20 group-hover:text-${item.color}-600/10 transition-colors`}>
+                            <div className={`text-5xl font-black ${item.theme.numberText} ${item.theme.numberHover} transition-colors`}>
                               #{item.val}
                             </div>
                           </div>
@@ -850,9 +862,11 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
                             <h4 className="text-2xl font-black text-slate-900 tracking-tight">#{item.val}</h4>
                             <p className="text-slate-600 font-bold uppercase text-xs tracking-widest">{item.label}</p>
 
-                            {/* Sleek Arrow Indicator */}
+                            {/* Arrow Animation */}
                             <div className="mt-4 flex items-center gap-2">
-                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter group-hover:text-slate-900 transition-colors">View Methodology</span>
+                              <span className="text-[10px] font-black text-slate-400 uppercase tracking-tighter group-hover:text-slate-900 transition-colors">
+                                View Methodology
+                              </span>
                               <ArrowRight className="w-3 h-3 text-slate-400 group-hover:translate-x-2 group-hover:text-slate-900 transition-all" />
                             </div>
                           </div>
