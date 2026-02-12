@@ -344,10 +344,10 @@ const ExamPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto  px-4 sm:px-6 lg:px-8 py-12 main-content-with-tabs">
-        <div className="grid grid-cols-1 gap-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 main-content-with-tabs">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
           {/* Main Content */}
-          <div className="col-span-1 space-y-8">
+          <div className="col-span-1 lg:col-span-2 space-y-8">
 
             {/* Overview Section */}
             {exam.overview && (
@@ -655,6 +655,100 @@ const ExamPage = () => {
             {/* FAQ Section */}
             <div id="faq" className="scroll-mt-24">
               <FAQ />
+            </div>
+          </div>
+
+          {/* Sticky CTA Sidebar */}
+          <div className="col-span-1 lg:col-span-1">
+            <div className="sticky top-24 space-y-6">
+              {/* Main CTA Card */}
+              <Card className="border-0 shadow-2xl rounded-3xl overflow-hidden bg-gradient-to-br from-green-600 to-emerald-700 text-white">
+                <CardContent className="p-0">
+                  {/* Header */}
+                  <div className="px-6 py-8 text-center">
+                    <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center mx-auto mb-4">
+                      <GraduationCap className="w-8 h-8 text-white" />
+                    </div>
+                    <h3 className="text-2xl font-black mb-2">Ready to Excel?</h3>
+                    <p className="text-white/90 font-medium">Get expert guidance for {exam.short_name}</p>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="px-6 pb-8 space-y-4">
+                    <Button
+                      onClick={openModal}
+                      className="w-full bg-white text-green-700 hover:bg-green-50 font-black rounded-2xl h-14 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 border-2 border-white/20"
+                    >
+                      <Award className="w-5 h-5 mr-2" />
+                      Get Expert Guidance
+                    </Button>
+                    
+                    <Button
+                      onClick={openModal}
+                      className="w-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 font-black rounded-2xl h-14 text-lg border-2 border-white/30 transition-all duration-300"
+                    >
+                      <Target className="w-5 h-5 mr-2" />
+                      Apply Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Quick Info Card */}
+              <Card className="border-0 shadow-xl rounded-2xl bg-white">
+                <CardContent className="p-6">
+                  <h4 className="text-lg font-bold text-slate-900 mb-4">Quick Info</h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Globe className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase">Mode</p>
+                        <p className="text-sm font-semibold text-slate-900">{exam.exam_mode}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Clock className="w-4 h-4 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase">Frequency</p>
+                        <p className="text-sm font-semibold text-slate-900">{exam.frequency}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Building className="w-4 h-4 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-slate-500 uppercase">Conducting Body</p>
+                        <p className="text-sm font-semibold text-slate-900">{exam.conducting_body}</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Contact Card */}
+              <Card className="border-0 shadow-xl rounded-2xl bg-gradient-to-br from-slate-50 to-white">
+                <CardContent className="p-6 text-center">
+                  <div className="w-12 h-12 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
+                  <h4 className="text-lg font-bold text-slate-900 mb-2">Need Help?</h4>
+                  <p className="text-sm text-slate-600 mb-4">Our experts are here to guide you through the entire process</p>
+                  <Button
+                    onClick={openModal}
+                    variant="outline"
+                    className="w-full border-green-200 text-green-700 hover:bg-green-50 font-semibold rounded-xl"
+                  >
+                    Talk to Expert
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
           </div>
 
