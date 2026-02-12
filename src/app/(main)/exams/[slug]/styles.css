@@ -141,7 +141,7 @@
 
 /* Main content spacing from left navigation */
 .main-content-with-tabs {
-  margin-left: 2rem; /* Create gap between tabs and content */
+  /* Removed margin-left to allow proper centering */
 }
 
 /* Smooth scroll behavior for sections */
