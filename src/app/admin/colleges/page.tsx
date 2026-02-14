@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, GraduationCap, Search, Filter } from 'lucide-react'
+import { Plus, GraduationCap, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 import { dummyCountries } from '@/data/dummyData'
 import { generateSlug } from '@/lib/slug'
 import { useAdminColleges, useAdminCountries, useSaveCollege, useDeleteCollege } from '@/hooks/useAdminColleges'
@@ -102,6 +102,10 @@ export default function CollegesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCountry, setSelectedCountry] = useState<string>('all')
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  
   // TanStack Query hooks
   const { data: colleges = [], isLoading: dataLoading, error: collegesError } = useAdminColleges()
   const { data: countries = dummyCountries } = useAdminCountries()
@@ -188,6 +192,22 @@ export default function CollegesPage() {
 
     return filtered
   }, [colleges, searchTerm, selectedCountry])
+
+  // Pagination logic
+  const paginatedColleges = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredColleges.slice(startIndex, endIndex)
+  }, [filteredColleges, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(filteredColleges.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage + 1
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredColleges.length)
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCountry])
 
   const columns = [
     {
@@ -770,7 +790,7 @@ export default function CollegesPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">All Colleges</h2>
             <p className="text-sm text-gray-500">
-              {filteredColleges.length} of {colleges.length} colleges
+              {filteredColleges.length > 0 ? `${startIndex}-${endIndex} of ${filteredColleges.length} colleges` : '0 colleges'}
             </p>
           </div>
           <Button onClick={handleAddCollege} className="flex items-center space-x-2">
@@ -812,12 +832,100 @@ export default function CollegesPage() {
 
         {/* Colleges Table */}
         <AdminTable
-          data={filteredColleges}
+          data={paginatedColleges}
           columns={columns}
           actions={actions}
           loading={dataLoading}
           emptyMessage="No colleges found. Add your first college to get started."
         />
+
+        {/* Pagination Controls */}
+        {filteredColleges.length > itemsPerPage && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Items per page:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                setItemsPerPage(Number(value))
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  )
+                })}
+                
+                {totalPages > 5 && (
+                  <>
+                    <span className="px-2 text-sm text-gray-500">...</span>
+                    <Button
+                      variant={currentPage === totalPages ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
 
         {/* Add/Edit Modal */}
         <AdminModal
