@@ -10,8 +10,8 @@ import { getCountryName } from "@/lib/normalize"
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, MapPin, DollarSign, Clock, GraduationCap, Building, Filter, X, ArrowRight, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
-import { useInfiniteColleges } from '@/hooks/useColleges'
+import { Search, MapPin, DollarSign, Clock, GraduationCap, Building, Filter, X, ArrowRight, Loader2, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useColleges, useCollegeFilters } from '@/hooks/useColleges'
 
 interface College {
   _id: string
@@ -36,26 +36,22 @@ export default function CollegesPage() {
   const [selectedExam, setSelectedExam] = useState<string>('all')
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('')
   
-  const observer = useRef<IntersectionObserver | null>(null)
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(12)
   
-  // Use TanStack Query for infinite scroll
+  // Use TanStack Query for paginated colleges
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: collegesData,
     isLoading,
     isError,
     error,
     refetch
-  } = useInfiniteColleges(debouncedSearchTerm, selectedCountry, selectedExam)
+  } = useColleges(debouncedSearchTerm, selectedCountry, selectedExam, currentPage, itemsPerPage)
   
-  // Flatten all pages for rendering
-  const colleges = useMemo(() => 
-    data?.pages.flatMap(page => page.colleges) || [], [data]
-  )
-  
-  const totalCount = data?.pages[0]?.total || 0
+  const colleges = collegesData?.colleges || []
+  const totalCount = collegesData?.total || 0
+  const totalPages = collegesData?.totalPages || 0
 
   // Debounce search term (wait 500ms after user stops typing)
   useEffect(() => {
@@ -66,22 +62,10 @@ export default function CollegesPage() {
     return () => clearTimeout(timer)
   }, [searchTerm])
 
-  // Setup intersection observer for infinite scroll
-  const lastCollegeRef = useCallback((node: HTMLDivElement | null) => {
-    if (isFetchingNextPage) return
-    if (observer.current) observer.current.disconnect()
-    
-    observer.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && hasNextPage) {
-        fetchNextPage()
-      }
-    }, {
-      rootMargin: '100px',
-      threshold: 0.1
-    })
-    
-    if (node) observer.current.observe(node)
-  }, [isFetchingNextPage, hasNextPage, fetchNextPage])
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [debouncedSearchTerm, selectedCountry, selectedExam])
 
   // Extract unique countries and exams from colleges for filters
   const { countries, exams } = useMemo(() => {
@@ -231,10 +215,7 @@ export default function CollegesPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {colleges.map((college, index) => (
-                <div
-                  key={college._id}
-                  ref={index === colleges.length - 1 ? lastCollegeRef : null}
-                >
+                <div key={college._id}>
                   <Card className="group border-none py-0 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-white flex flex-col h-full">
                     {/* Image Header */}
                     <div className="relative h-56 w-full overflow-hidden">
@@ -310,26 +291,95 @@ export default function CollegesPage() {
               ))}
             </div>
           )}
-
-          {/* Loading indicator for infinite scroll */}
-          {isFetchingNextPage && (
-            <div className="flex justify-center py-8">
-              <div className="flex items-center gap-3 text-slate-500">
-                <Loader2 className="w-6 h-6 animate-spin" />
-                <span className="font-medium">Loading more colleges...</span>
-              </div>
-            </div>
-          )}
-
-          {/* End of results indicator */}
-          {!hasNextPage && colleges.length > 0 && (
-            <div className="text-center py-8">
-              <p className="text-slate-500 font-medium">
-                Showing all {colleges.length} colleges
-              </p>
-            </div>
-          )}
         </div>
+        
+        {/* Pagination Controls */}
+        {totalCount > itemsPerPage && (
+          <div className="flex flex-col py-5 sm:flex-row items-center justify-between gap-4 mt-12">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Colleges per page:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                setItemsPerPage(Number(value))
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="12">12</SelectItem>
+                  <SelectItem value="18">18</SelectItem>
+                  <SelectItem value="24">24</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  )
+                })}
+                
+                {totalPages > 5 && (
+                  <>
+                    <span className="px-2 text-sm text-gray-500">...</span>
+                    <Button
+                      variant={currentPage === totalPages ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )

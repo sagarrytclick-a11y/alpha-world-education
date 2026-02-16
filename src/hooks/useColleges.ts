@@ -140,6 +140,59 @@ export function useInfiniteColleges(search: string, country: string, exam: strin
   })
 }
 
+// Hook for paginated colleges list
+export function useColleges(search: string, country: string, exam: string, page: number, limit: number = 12) {
+  return useQuery({
+    queryKey: ['colleges', 'paginated', search, country, exam, page, limit],
+    queryFn: () => fetchCollegesWithLimit({ 
+      search, 
+      country, 
+      exam, 
+      page, 
+      limit 
+    }),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  })
+}
+
+// Fetch colleges with custom limit and pagination
+const fetchCollegesWithLimit = async ({ 
+  search = '', 
+  country = '', 
+  exam = '',
+  page = 1,
+  limit = 12
+}): Promise<CollegesResponse> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+    ...(search && { search }),
+    ...(country && country !== 'all' && { country }),
+    ...(exam && exam !== 'all' && { exam })
+  })
+
+  const response = await fetch(`/api/colleges?${params}`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  
+  const result = await response.json()
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to fetch colleges')
+  }
+  
+  return {
+    colleges: result.data.colleges || [],
+    total: result.data.total || 0,
+    page: page,
+    totalPages: Math.ceil((result.data.total || 0) / limit),
+    hasMore: (result.data.colleges || []).length === limit
+  }
+}
+
 // Hook for single college details
 export function useCollege(slug: string) {
   return useQuery({

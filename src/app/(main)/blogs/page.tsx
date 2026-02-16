@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, Calendar, Tag, FileText, Clock, Image as ImageIcon, User, Eye, MessageCircle, ArrowRight, X, Filter, AlertCircle, RefreshCw } from 'lucide-react'
+import { Search, Calendar, Tag, FileText, Clock, Image as ImageIcon, User, Eye, MessageCircle, ArrowRight, X, Filter, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBlogs } from '@/hooks/useBlogs'
 
 interface Blog {
@@ -33,6 +33,10 @@ interface Blog {
 export default function BlogsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(9)
 
   // Use TanStack Query for blogs data
   const { 
@@ -61,6 +65,22 @@ export default function BlogsPage() {
 
     return filtered
   }, [blogs, searchTerm, selectedCategory])
+
+  // Pagination logic
+  const paginatedBlogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredBlogs.slice(startIndex, endIndex)
+  }, [filteredBlogs, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage + 1
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredBlogs.length)
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory])
 
   // Extract unique categories
   const categories = useMemo(() => 
@@ -187,7 +207,7 @@ export default function BlogsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredBlogs.map((blog) => (
+            {paginatedBlogs.map((blog) => (
               <Card key={blog._id} className="group cursor-pointer border py-0 border-gray-400 shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] transition-all duration-500 rounded-[2.5rem] overflow-hidden bg-white flex flex-col h-full">
                 {/* Image Header */}
                 <div className="relative h-48 w-full overflow-hidden">
@@ -275,6 +295,94 @@ export default function BlogsPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        )}
+        
+        {/* Pagination Controls */}
+        {filteredBlogs.length > itemsPerPage && (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Articles per page:</span>
+              <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+                setItemsPerPage(Number(value))
+                setCurrentPage(1)
+              }}>
+                <SelectTrigger className="w-20">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="6">6</SelectItem>
+                  <SelectItem value="9">9</SelectItem>
+                  <SelectItem value="12">12</SelectItem>
+                  <SelectItem value="18">18</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="flex items-center gap-1"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous
+              </Button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                  let pageNum
+                  if (totalPages <= 5) {
+                    pageNum = i + 1
+                  } else if (currentPage <= 3) {
+                    pageNum = i + 1
+                  } else if (currentPage >= totalPages - 2) {
+                    pageNum = totalPages - 4 + i
+                  } else {
+                    pageNum = currentPage - 2 + i
+                  }
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={currentPage === pageNum ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(pageNum)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {pageNum}
+                    </Button>
+                  )
+                })}
+                
+                {totalPages > 5 && (
+                  <>
+                    <span className="px-2 text-sm text-gray-500">...</span>
+                    <Button
+                      variant={currentPage === totalPages ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setCurrentPage(totalPages)}
+                      className="w-8 h-8 p-0"
+                    >
+                      {totalPages}
+                    </Button>
+                  </>
+                )}
+              </div>
+              
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="flex items-center gap-1"
+              >
+                Next
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         )}
       </div>
