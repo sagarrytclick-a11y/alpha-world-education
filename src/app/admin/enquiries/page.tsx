@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw } from 'lucide-react'
+import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAdminEnquiries, useDeleteEnquiry, useUpdateEnquiryStatus } from '@/hooks/useAdminEnquiries'
 import { Enquiry } from '@/hooks/useAdminEnquiries'
 
@@ -25,6 +25,10 @@ export default function EnquiriesPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   const [selectedPriority, setSelectedPriority] = useState<string>('all')
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
   
   // API hooks
   const { data: enquiries = [], isLoading: dataLoading, refetch } = useAdminEnquiries()
@@ -54,6 +58,22 @@ export default function EnquiriesPage() {
 
     return filtered
   }, [enquiries, searchTerm, selectedStatus, selectedPriority])
+
+  // Pagination logic
+  const paginatedEnquiries = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage
+    const endIndex = startIndex + itemsPerPage
+    return filteredEnquiries.slice(startIndex, endIndex)
+  }, [filteredEnquiries, currentPage, itemsPerPage])
+
+  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage + 1
+  const endIndex = Math.min(currentPage * itemsPerPage, filteredEnquiries.length)
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedStatus, selectedPriority])
 
   const columns = [
     {
@@ -217,7 +237,9 @@ export default function EnquiriesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Enquiries</h1>
-          <p className="text-gray-600">Manage student enquiries and support requests</p>
+          <p className="text-gray-600">
+            {filteredEnquiries.length > 0 ? `${startIndex}-${endIndex} of ${filteredEnquiries.length} enquiries` : '0 enquiries'}
+          </p>
         </div>
         <Button
           onClick={() => refetch()}
@@ -273,7 +295,7 @@ export default function EnquiriesPage() {
 
       {/* Table */}
       <AdminTable
-        data={filteredEnquiries}
+        data={paginatedEnquiries}
         columns={columns}
         actions={actions}
         loading={false}
@@ -447,6 +469,94 @@ export default function EnquiriesPage() {
           </div>
         </div>
       </AdminModal>
+
+      {/* Pagination Controls */}
+      {filteredEnquiries.length > itemsPerPage && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Items per page:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+              setItemsPerPage(Number(value))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum
+                if (totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+                
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+              
+              {totalPages > 5 && (
+                <>
+                  <span className="px-2 text-sm text-gray-500">...</span>
+                  <Button
+                    variant={currentPage === totalPages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
