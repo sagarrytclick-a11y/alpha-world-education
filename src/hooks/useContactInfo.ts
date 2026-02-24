@@ -55,7 +55,7 @@ export function useContactInfo(): ContactInfo {
       office: contact.address.office,
       city: contact.address.city,
       country: contact.address.country,
-      full: `${contact.address.office}, ${contact.address.city}, ${contact.address.country}`,
+      full: `${contact.address.office}`,
     },
   };
 }
