@@ -15,10 +15,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from 'lucide-react'
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
 import { generateSlug } from '@/lib/slug'
-import { useAdminExams, useSaveExam, useDeleteExam } from '@/hooks/useAdminExams'
+import { useAdminExamsPaginated, useSaveExam, useDeleteExam } from '@/hooks/useAdminExams'
 import { toast } from 'sonner'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 // Function to generate a sensible and clean slug
 const generateSensibleSlug = (text: string): string => {
@@ -108,6 +115,10 @@ export default function SimpleExamsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingExam, setEditingExam] = useState<Exam | null>(null)
   const [activeTab, setActiveTab] = useState('basic')
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
 
   const [formData, setFormData] = useState<Exam>({
     name: '',
@@ -156,9 +167,23 @@ export default function SimpleExamsPage() {
   })
   
   // TanStack Query hooks
-  const { data: exams = [], isLoading: dataLoading } = useAdminExams()
+  const { data: paginatedData, isLoading: dataLoading } = useAdminExamsPaginated(currentPage, itemsPerPage)
   const saveExamMutation = useSaveExam()
   const deleteExamMutation = useDeleteExam()
+
+  const exams = paginatedData?.exams || []
+  const totalCount = paginatedData?.total || 0
+  const totalPages = paginatedData?.totalPages || 0
+
+  // Debug logging
+  console.log('🔍 DEBUG: Exams page state:', {
+    currentPage,
+    itemsPerPage,
+    paginatedData,
+    exams,
+    totalCount,
+    totalPages
+  })
 
 
   const handleSaveExam = async () => {
@@ -572,7 +597,12 @@ export default function SimpleExamsPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Simple Exams Management</h2>
+        <div>
+          <h2 className="text-lg font-semibold">Simple Exams Management</h2>
+          <p className="text-sm text-gray-500">
+            {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} exams` : '0 exams'}
+          </p>
+        </div>
         <Button onClick={handleAddExam}>
           <Plus className="h-4 w-4 mr-2" />
           Add Exam
@@ -584,6 +614,94 @@ export default function SimpleExamsPage() {
         columns={columns}
         loading={false}
       />
+
+      {/* Pagination Controls */}
+      {totalCount > itemsPerPage && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Items per page:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+              setItemsPerPage(Number(value))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum
+                if (totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+                
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+              
+              {totalPages > 5 && (
+                <>
+                  <span className="px-2 text-sm text-gray-500">...</span>
+                  <Button
+                    variant={currentPage === totalPages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <AdminModal 
         open={isModalOpen} 

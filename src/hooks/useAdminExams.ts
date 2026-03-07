@@ -72,6 +72,48 @@ const fetchAdminExams = async (): Promise<AdminExam[]> => {
   return result.data
 }
 
+// Fetch paginated exams for admin
+const fetchAdminExamsPaginated = async ({ 
+  page = 1, 
+  limit = 10 
+}): Promise<{
+  exams: AdminExam[]
+  total: number
+  page: number
+  totalPages: number
+  hasMore: boolean
+}> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  })
+
+  console.log('🔍 DEBUG: Fetching exams with params:', params.toString())
+
+  const response = await fetch(`/api/admin/exams?${params}`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  
+  const result = await response.json()
+  console.log('🔍 DEBUG: Exams API response:', result)
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to fetch exams')
+  }
+  
+  const exams = result.data || []
+  const total = result.total || exams.length
+  
+  return {
+    exams,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+    hasMore: exams.length === limit
+  }
+}
+
 // Create or update exam
 const saveExam = async (data: Partial<AdminExam> & { _id?: string }): Promise<AdminExam> => {
   const isEditing = !!data._id
@@ -128,6 +170,17 @@ export function useAdminExams() {
   })
 }
 
+export function useAdminExamsPaginated(page: number, limit: number = 10) {
+  return useQuery({
+    queryKey: ['admin', 'exams', 'paginated', page, limit],
+    queryFn: () => fetchAdminExamsPaginated({ page, limit }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  })
+}
+
 export function useSaveExam() {
   const queryClient = useQueryClient()
   
@@ -135,6 +188,7 @@ export function useSaveExam() {
     mutationFn: saveExam,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'exams'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'exams', 'paginated'] })
     },
     onError: (error) => {
       console.error('Error saving exam:', error)
@@ -150,6 +204,7 @@ export function useDeleteExam() {
     mutationFn: deleteExam,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'exams'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'exams', 'paginated'] })
     },
     onError: (error) => {
       console.error('Error deleting exam:', error)

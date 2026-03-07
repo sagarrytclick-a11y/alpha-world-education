@@ -5,10 +5,17 @@ import { AdminTable, createEditAction, createDeleteAction } from '@/components/a
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminForm } from '@/components/admin/AdminForm'
 import { Button } from '@/components/ui/button'
-import { Plus, Globe } from 'lucide-react'
+import { Plus, Globe, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { generateSlug } from '@/lib/slug'
-import { useAdminCountries, useSaveCountry, useDeleteCountry } from '@/hooks/useAdminCountries'
+import { useAdminCountriesPaginated, useSaveCountry, useDeleteCountry } from '@/hooks/useAdminCountries'
 import { toast } from 'sonner'
 
 export interface Country {
@@ -29,6 +36,11 @@ export default function CountriesPage() {
   const [editingCountry, setEditingCountry] = useState<Country | null>(null)
   const [deleteModalOpen, setDeleteModalOpen] = useState(false)
   const [countryToDelete, setCountryToDelete] = useState<Country | null>(null)
+  
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  
   const [formData, setFormData] = useState({
     name: '',
     slug: '',
@@ -40,9 +52,23 @@ export default function CountriesPage() {
   })
   
   // TanStack Query hooks
-  const { data: countries = [], isLoading: dataLoading } = useAdminCountries()
+  const { data: paginatedData, isLoading: dataLoading } = useAdminCountriesPaginated(currentPage, itemsPerPage)
   const saveCountryMutation = useSaveCountry()
   const deleteCountryMutation = useDeleteCountry()
+
+  const countries = paginatedData?.countries || []
+  const totalCount = paginatedData?.total || 0
+  const totalPages = paginatedData?.totalPages || 0
+
+  // Debug logging
+  console.log('🔍 DEBUG: Countries page state:', {
+    currentPage,
+    itemsPerPage,
+    paginatedData,
+    countries,
+    totalCount,
+    totalPages
+  })
 
 
   const columns = [
@@ -271,7 +297,7 @@ export default function CountriesPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">All Countries</h2>
             <p className="text-sm text-gray-500">
-              {countries.length} countries total
+              {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} countries` : '0 countries'}
             </p>
           </div>
           <Button onClick={handleAddCountry} className="flex items-center space-x-2">
@@ -333,6 +359,94 @@ export default function CountriesPage() {
             <span>{countryToDelete?.name}</span>
           </div>
         </AdminModal>
+
+      {/* Pagination Controls */}
+      {totalCount > itemsPerPage && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Items per page:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+              setItemsPerPage(Number(value))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum
+                if (totalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+                
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+              
+              {totalPages > 5 && (
+                <>
+                  <span className="px-2 text-sm text-gray-500">...</span>
+                  <Button
+                    variant={currentPage === totalPages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(totalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {totalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )

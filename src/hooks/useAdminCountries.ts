@@ -30,6 +30,48 @@ const fetchAdminCountries = async (): Promise<AdminCountry[]> => {
   return result.data
 }
 
+// Fetch paginated countries for admin
+const fetchAdminCountriesPaginated = async ({ 
+  page = 1, 
+  limit = 10 
+}): Promise<{
+  countries: AdminCountry[]
+  total: number
+  page: number
+  totalPages: number
+  hasMore: boolean
+}> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  })
+
+  console.log('🔍 DEBUG: Fetching countries with params:', params.toString())
+
+  const response = await fetch(`/api/admin/countries?${params}`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  
+  const result = await response.json()
+  console.log('🔍 DEBUG: Countries API response:', result)
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to fetch countries')
+  }
+  
+  const countries = result.data || []
+  const total = result.total || countries.length
+  
+  return {
+    countries,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+    hasMore: countries.length === limit
+  }
+}
+
 // Create or update country
 const saveCountry = async (data: Partial<AdminCountry> & { _id?: string }): Promise<AdminCountry> => {
   const isEditing = !!data._id
@@ -86,6 +128,17 @@ export function useAdminCountries() {
   })
 }
 
+export function useAdminCountriesPaginated(page: number, limit: number = 10) {
+  return useQuery({
+    queryKey: ['admin', 'countries', 'paginated', page, limit],
+    queryFn: () => fetchAdminCountriesPaginated({ page, limit }),
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 30 * 60 * 1000, // 30 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+  })
+}
+
 export function useSaveCountry() {
   const queryClient = useQueryClient()
   
@@ -93,6 +146,7 @@ export function useSaveCountry() {
     mutationFn: saveCountry,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'countries'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'countries', 'paginated'] })
     },
     onError: (error) => {
       console.error('Error saving country:', error)
@@ -108,6 +162,7 @@ export function useDeleteCountry() {
     mutationFn: deleteCountry,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'countries'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'countries', 'paginated'] })
     },
     onError: (error) => {
       console.error('Error deleting country:', error)

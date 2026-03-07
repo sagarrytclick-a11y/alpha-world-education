@@ -6,33 +6,38 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Globe, GraduationCap, FileText, MoreHorizontal, ChevronRight, Activity, FileCheck, Loader2 } from 'lucide-react'
+import { Globe, GraduationCap, FileText, MoreHorizontal, ChevronRight, Activity, FileCheck, Loader2, MessageSquare } from 'lucide-react'
 import { useAdminDashboardStats } from '@/hooks/useAdminDashboard'
 import { useAdminCountries, useAdminColleges } from '@/hooks/useAdminColleges'
 import { useAdminBlogs } from '@/hooks/useAdminBlogs'
+import { useAdminEnquiriesPaginated } from '@/hooks/useAdminEnquiries'
 import { dummyCountries, dummyColleges, dummyBlogs } from '@/data/dummyData'
 
 export default function DashboardPage() {
   // TanStack Query hooks
-  const { data: dbStats = { countries: 0, colleges: 0, blogs: 0, exams: 0 }, isLoading: statsLoading, error: statsError } = useAdminDashboardStats()
+  const { data: dbStats = { countries: 0, colleges: 0, blogs: 0, exams: 0, pendingEnquiries: 0 }, isLoading: statsLoading, error: statsError } = useAdminDashboardStats()
   const { data: countries = [], isLoading: countriesLoading } = useAdminCountries()
   const { data: colleges = [], isLoading: collegesLoading } = useAdminColleges()
   const { data: blogs = [], isLoading: blogsLoading } = useAdminBlogs()
+  const { data: paginatedEnquiries = { enquiries: [], total: 0, page: 1, totalPages: 1, hasMore: false }, isLoading: enquiriesLoading } = useAdminEnquiriesPaginated(1, 5) // Get recent 5 enquiries
+  const enquiries = paginatedEnquiries.enquiries || []
   
   // Overall loading state
-  const loading = statsLoading || countriesLoading || collegesLoading || blogsLoading
+  const loading = statsLoading || countriesLoading || collegesLoading || blogsLoading || enquiriesLoading
   
   // Fallback to dummy data if there are errors
   const displayCountries = countries.length > 0 ? countries : dummyCountries
   const displayColleges = colleges.length > 0 ? colleges : dummyColleges
   const displayBlogs = blogs.length > 0 ? blogs : dummyBlogs
-  const displayStats = dbStats.countries > 0 || dbStats.colleges > 0 || dbStats.blogs > 0 || dbStats.exams > 0 
+  const displayEnquiries = enquiries.length > 0 ? enquiries : []
+  const displayStats = dbStats.countries > 0 || dbStats.colleges > 0 || dbStats.blogs > 0 || dbStats.exams > 0 || dbStats.pendingEnquiries > 0 
     ? dbStats 
     : {
         countries: dummyCountries.length,
         colleges: dummyColleges.length,
         blogs: dummyBlogs.length,
         exams: 12,
+        pendingEnquiries: 8, // Dummy pending enquiries count
       }
 
   const stats = [
@@ -67,6 +72,14 @@ export default function DashboardPage() {
       icon: FileText,
       color: 'text-purple-600',
       bgColor: 'bg-purple-100'
+    },
+    {
+      title: 'Pending Enquiries',
+      value: displayStats.pendingEnquiries,
+      description: 'Need attention',
+      icon: MessageSquare,
+      color: 'text-red-600',
+      bgColor: 'bg-red-100'
     }
   ]
 
@@ -96,7 +109,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-lg transition-all duration-200 border-0 shadow-sm">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -171,8 +184,8 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        {/* System Overview Section (Countries, Blogs, Colleges Dialogs) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+        {/* System Overview Section (Countries, Blogs, Colleges, Enquiries Dialogs) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {/* Example: Active Countries Card */}
           <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
             <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -271,6 +284,48 @@ export default function DashboardPage() {
                   <div key={(college as any)._id || (college as any).id} className="space-y-1 p-2 rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="text-sm font-medium truncate">{college.name}</div>
                     <div className="text-xs text-gray-500">${(college as any).fees?.toLocaleString()}/year</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Recent Enquiries Card */}
+          <Card className="border-0 shadow-sm hover:shadow-md transition-shadow">
+            <CardHeader className="pb-3 flex flex-row items-center justify-between">
+              <CardTitle className="text-lg">Recent Enquiries</CardTitle>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="sm"><MoreHorizontal className="h-4 w-4" /></Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader><DialogTitle>All Recent Enquiries</DialogTitle></DialogHeader>
+                  <ScrollArea className="h-80">
+                    {displayEnquiries.map((enquiry: any) => (
+                      <div key={(enquiry as any)._id || (enquiry as any).id} className="p-3 border-b">
+                        <h3 className="font-medium text-sm">{enquiry.name}</h3>
+                        <p className="text-xs text-gray-600 mt-1">{enquiry.subject}</p>
+                        <div className="flex items-center justify-between mt-2">
+                          <Badge variant={enquiry.status === 'pending' ? 'destructive' : 'secondary'} className="text-xs">
+                            {enquiry.status}
+                          </Badge>
+                          <span className="text-xs text-gray-500">{new Date(enquiry.createdAt || (enquiry as any).created_at).toLocaleDateString()}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {displayEnquiries.slice(0, 4).map((enquiry: any) => (
+                  <div key={(enquiry as any)._id || (enquiry as any).id} className="space-y-1 p-2 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div className="text-sm font-medium line-clamp-1">{enquiry.name}</div>
+                    <div className="text-xs text-gray-500">{enquiry.subject}</div>
+                    <Badge variant={enquiry.status === 'pending' ? 'destructive' : 'secondary'} className="text-xs w-fit">
+                      {enquiry.status}
+                    </Badge>
                   </div>
                 ))}
               </div>

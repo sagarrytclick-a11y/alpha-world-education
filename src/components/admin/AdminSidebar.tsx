@@ -14,6 +14,7 @@ import {
   X
 } from 'lucide-react'
 import { useState } from 'react'
+import Image from 'next/image'
 
 const navigation = [
   { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
@@ -47,9 +48,9 @@ export function AdminSidebar() {
       )}>
         <div className="flex flex-col h-full">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <p className="text-lg font-bold text-gray-900">Alpha World Education</p>
-            <p className="text-sm text-center text-gray-500">Admin CMS</p>
+          <div className="p-6 border-b flex items-center gap-1 border-gray-200">
+            <Image src="/logo.png" alt="Alpha World Education" width={70} height={70} className="object-contain" />
+            <p className="text-[14px] font-bold text-gray-900">Alpha World Education</p>
           </div>
 
           {/* Navigation */}
@@ -78,7 +79,7 @@ export function AdminSidebar() {
           {/* Footer */}
           <div className="p-4 border-t border-gray-200">
             <div className="text-xs text-gray-500 text-center">
-              © 2024 Alpha World Education
+              © 2026 Alpha World Education
             </div>
           </div>
         </div>

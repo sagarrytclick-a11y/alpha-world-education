@@ -14,9 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, FileText, Search, Eye } from 'lucide-react'
+import { Plus, FileText, Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
 import { generateSlug } from '@/lib/slug'
-import { useAdminBlogs, useSaveBlog, useDeleteBlog } from '@/hooks/useAdminBlogs'
+import { useAdminBlogsPaginated, useSaveBlog, useDeleteBlog } from '@/hooks/useAdminBlogs'
 import { toast } from 'sonner'
 
 export interface Blog {
@@ -42,10 +42,36 @@ export default function BlogsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [selectedStatus, setSelectedStatus] = useState<string>('all')
   
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1)
+  const [itemsPerPage, setItemsPerPage] = useState(10)
+  
   // TanStack Query hooks
-  const { data: blogs = [], isLoading: dataLoading } = useAdminBlogs()
+  const { data: paginatedData, isLoading: dataLoading } = useAdminBlogsPaginated(currentPage, itemsPerPage, searchTerm, selectedCategory, selectedStatus)
   const saveBlogMutation = useSaveBlog()
   const deleteBlogMutation = useDeleteBlog()
+
+  const blogs = paginatedData?.blogs || []
+  const totalCount = paginatedData?.total || 0
+  const serverTotalPages = paginatedData?.totalPages || 0
+
+  // Debug logging
+  console.log('🔍 DEBUG: Blogs page state:', {
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    selectedCategory,
+    selectedStatus,
+    paginatedData,
+    blogs,
+    totalCount,
+    serverTotalPages
+  })
+
+  // Reset to page 1 when filters change
+  React.useEffect(() => {
+    setCurrentPage(1)
+  }, [searchTerm, selectedCategory, selectedStatus])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -58,28 +84,6 @@ export default function BlogsPage() {
     is_active: true
   })
 
-
-  // Filter blogs based on search, category, and status using useMemo
-  const filteredBlogs = useMemo(() => {
-    let filtered = blogs
-
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(blog => blog.category === selectedCategory)
-    }
-
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter(blog => blog.is_active === (selectedStatus === 'published'))
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(blog => 
-        blog.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        blog.content.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    return filtered
-  }, [blogs, searchTerm, selectedCategory, selectedStatus])
 
   const columns = [
     {
@@ -376,7 +380,7 @@ export default function BlogsPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">All Blog Posts</h2>
             <p className="text-sm text-gray-500">
-              {filteredBlogs.length} of {blogs.length} posts
+              {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} posts` : '0 posts'}
             </p>
           </div>
           <Button onClick={handleAddBlog} className="flex items-center space-x-2">
@@ -429,11 +433,11 @@ export default function BlogsPage() {
 
         {/* Blogs Table */}
         <AdminTable
-          data={filteredBlogs}
+          data={blogs}
           columns={columns}
           actions={actions}
           loading={dataLoading}
-          emptyMessage="No blog posts found. Create your first blog post to get started."
+          emptyMessage="No blog posts found. Add your first blog post to get started."
         />
 
         {/* Add/Edit Modal */}
@@ -481,6 +485,94 @@ export default function BlogsPage() {
             <span>{blogToDelete?.title}</span>
           </div>
         </AdminModal>
+
+      {/* Pagination Controls */}
+      {totalCount > itemsPerPage && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-gray-600">Items per page:</span>
+            <Select value={itemsPerPage.toString()} onValueChange={(value) => {
+              setItemsPerPage(Number(value))
+              setCurrentPage(1)
+            }}>
+              <SelectTrigger className="w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="5">5</SelectItem>
+                <SelectItem value="10">10</SelectItem>
+                <SelectItem value="20">20</SelectItem>
+                <SelectItem value="50">50</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="flex items-center gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(5, serverTotalPages) }, (_, i) => {
+                let pageNum
+                if (serverTotalPages <= 5) {
+                  pageNum = i + 1
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1
+                } else if (currentPage >= serverTotalPages - 2) {
+                  pageNum = serverTotalPages - 4 + i
+                } else {
+                  pageNum = currentPage - 2 + i
+                }
+                
+                return (
+                  <Button
+                    key={pageNum}
+                    variant={currentPage === pageNum ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(pageNum)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {pageNum}
+                  </Button>
+                )
+              })}
+              
+              {serverTotalPages > 5 && (
+                <>
+                  <span className="px-2 text-sm text-gray-500">...</span>
+                  <Button
+                    variant={currentPage === serverTotalPages ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setCurrentPage(serverTotalPages)}
+                    className="w-8 h-8 p-0"
+                  >
+                    {serverTotalPages}
+                  </Button>
+                </>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, serverTotalPages))}
+              disabled={currentPage === serverTotalPages}
+              className="flex items-center gap-1"
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
       </div>
     </div>
   )
