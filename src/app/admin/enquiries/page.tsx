@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
-import { useAdminEnquiries, useDeleteEnquiry, useUpdateEnquiryStatus } from '@/hooks/useAdminEnquiries'
+import { useAdminEnquiriesPaginated, useDeleteEnquiry, useUpdateEnquiryStatus } from '@/hooks/useAdminEnquiries'
 import { Enquiry } from '@/hooks/useAdminEnquiries'
 
 export default function EnquiriesPage() {
@@ -31,44 +31,26 @@ export default function EnquiriesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   
   // API hooks
-  const { data: enquiries = [], isLoading: dataLoading, refetch } = useAdminEnquiries()
+  const { data: paginatedData, isLoading: dataLoading, refetch } = useAdminEnquiriesPaginated(currentPage, itemsPerPage, searchTerm, selectedStatus, selectedPriority)
   const deleteEnquiryMutation = useDeleteEnquiry()
   const updateEnquiryStatusMutation = useUpdateEnquiryStatus()
 
-  // Filter enquiries based on search, status, and priority using useMemo
-  const filteredEnquiries = useMemo(() => {
-    let filtered = enquiries
+  const enquiries = paginatedData?.enquiries || []
+  const totalCount = paginatedData?.total || 0
+  const serverTotalPages = paginatedData?.totalPages || 0
 
-    if (selectedStatus !== 'all') {
-      filtered = filtered.filter((enquiry: Enquiry) => enquiry.status === selectedStatus)
-    }
-
-    if (selectedPriority !== 'all') {
-      filtered = filtered.filter((enquiry: Enquiry) => enquiry.priority === selectedPriority)
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter((enquiry: Enquiry) => 
-        enquiry.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        enquiry.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        enquiry.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        enquiry.message.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    return filtered
-  }, [enquiries, searchTerm, selectedStatus, selectedPriority])
-
-  // Pagination logic
-  const paginatedEnquiries = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return filteredEnquiries.slice(startIndex, endIndex)
-  }, [filteredEnquiries, currentPage, itemsPerPage])
-
-  const totalPages = Math.ceil(filteredEnquiries.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage + 1
-  const endIndex = Math.min(currentPage * itemsPerPage, filteredEnquiries.length)
+  // Debug logging
+  console.log('🔍 DEBUG: Enquiries page state:', {
+    currentPage,
+    itemsPerPage,
+    searchTerm,
+    selectedStatus,
+    selectedPriority,
+    paginatedData,
+    enquiries,
+    totalCount,
+    serverTotalPages
+  })
 
   // Reset to page 1 when filters change
   React.useEffect(() => {
@@ -238,7 +220,7 @@ export default function EnquiriesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Enquiries</h1>
           <p className="text-gray-600">
-            {filteredEnquiries.length > 0 ? `${startIndex}-${endIndex} of ${filteredEnquiries.length} enquiries` : '0 enquiries'}
+            {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} enquiries` : '0 enquiries'}
           </p>
         </div>
         <Button
@@ -295,7 +277,7 @@ export default function EnquiriesPage() {
 
       {/* Table */}
       <AdminTable
-        data={paginatedEnquiries}
+        data={enquiries}
         columns={columns}
         actions={actions}
         loading={false}
@@ -471,7 +453,7 @@ export default function EnquiriesPage() {
       </AdminModal>
 
       {/* Pagination Controls */}
-      {filteredEnquiries.length > itemsPerPage && (
+      {totalCount > itemsPerPage && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600">Items per page:</span>
@@ -504,14 +486,14 @@ export default function EnquiriesPage() {
             </Button>
             
             <div className="flex items-center gap-1">
-              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+              {Array.from({ length: Math.min(5, serverTotalPages) }, (_, i) => {
                 let pageNum
-                if (totalPages <= 5) {
+                if (serverTotalPages <= 5) {
                   pageNum = i + 1
                 } else if (currentPage <= 3) {
                   pageNum = i + 1
-                } else if (currentPage >= totalPages - 2) {
-                  pageNum = totalPages - 4 + i
+                } else if (currentPage >= serverTotalPages - 2) {
+                  pageNum = serverTotalPages - 4 + i
                 } else {
                   pageNum = currentPage - 2 + i
                 }
@@ -529,16 +511,16 @@ export default function EnquiriesPage() {
                 )
               })}
               
-              {totalPages > 5 && (
+              {serverTotalPages > 5 && (
                 <>
                   <span className="px-2 text-sm text-gray-500">...</span>
                   <Button
-                    variant={currentPage === totalPages ? "default" : "outline"}
+                    variant={currentPage === serverTotalPages ? "default" : "outline"}
                     size="sm"
-                    onClick={() => setCurrentPage(totalPages)}
+                    onClick={() => setCurrentPage(serverTotalPages)}
                     className="w-8 h-8 p-0"
                   >
-                    {totalPages}
+                    {serverTotalPages}
                   </Button>
                 </>
               )}
@@ -547,8 +529,8 @@ export default function EnquiriesPage() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-              disabled={currentPage === totalPages}
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, serverTotalPages))}
+              disabled={currentPage === serverTotalPages}
               className="flex items-center gap-1"
             >
               Next

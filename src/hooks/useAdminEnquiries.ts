@@ -40,6 +40,56 @@ export function useAdminEnquiries() {
   })
 }
 
+// Hook for fetching paginated enquiries
+export function useAdminEnquiriesPaginated(page: number, limit: number = 10, search: string = '', status: string = 'all', priority: string = 'all') {
+  return useQuery({
+    queryKey: ['admin-enquiries', 'paginated', page, limit, search, status, priority],
+    queryFn: async (): Promise<{
+      enquiries: Enquiry[]
+      total: number
+      page: number
+      totalPages: number
+      hasMore: boolean
+    }> => {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        ...(search && { search }),
+        ...(status && status !== 'all' && { status }),
+        ...(priority && priority !== 'all' && { priority })
+      })
+
+      console.log('🔍 DEBUG: Fetching enquiries with params:', params.toString())
+
+      const response = await fetch(`/api/admin/enquiries?${params}`)
+      
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to fetch enquiries')
+      }
+      
+      const result = await response.json()
+      console.log('🔍 DEBUG: Enquiries API response:', result)
+      
+      const enquiries = result.data || []
+      const total = result.total || enquiries.length
+      
+      return {
+        enquiries,
+        total,
+        page,
+        totalPages: Math.ceil(total / limit),
+        hasMore: enquiries.length === limit
+      }
+    },
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+    enabled: true, // Ensure the query is always enabled
+  })
+}
+
 // Hook for updating enquiry status
 export function useUpdateEnquiryStatus() {
   const queryClient = useQueryClient()
@@ -69,6 +119,7 @@ export function useUpdateEnquiryStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-enquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-enquiries', 'paginated'] })
       toast.success('Enquiry status updated successfully!')
     },
     onError: (error: Error) => {
@@ -93,6 +144,7 @@ export function useDeleteEnquiry() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-enquiries'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-enquiries', 'paginated'] })
       toast.success('Enquiry deleted successfully!')
     },
     onError: (error: Error) => {

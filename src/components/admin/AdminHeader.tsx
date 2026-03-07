@@ -12,6 +12,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface AdminHeaderProps {
   title: string
@@ -19,8 +21,37 @@ interface AdminHeaderProps {
 }
 
 export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
+  const router = useRouter()
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+      
+      const response = await fetch('/api/admin/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+
+      if (response.ok) {
+        // Redirect to login page after successful logout
+        router.push('/admin/login')
+      } else {
+        console.error('Logout failed')
+        // You might want to show an error message here
+      }
+    } catch (error) {
+      console.error('Logout error:', error)
+      // You might want to show an error message here
+    } finally {
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
+    <header className="bg-white shadow-sm py-3 border-b border-gray-200">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Page Title */}
@@ -35,22 +66,22 @@ export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
           <div className="flex items-center space-x-4">
             {/* Search */}
             <div className="hidden md:block">
-              <div className="relative">
+              {/* <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
                   placeholder="Search..."
                   className="pl-10 w-64"
                 />
-              </div>
+              </div> */}
             </div>
 
             {/* Notifications */}
-            <Button variant="ghost" size="sm" className="relative">
+            {/* <Button variant="ghost" size="sm" className="relative">
               <Bell className="h-5 w-5" />
               <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
                 3
               </span>
-            </Button>
+            </Button> */}
 
             {/* User Menu */}
             <DropdownMenu>
@@ -65,17 +96,19 @@ export function AdminHeader({ title, subtitle }: AdminHeaderProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Admin User</p>
-                    <p className="text-xs leading-none text-muted-foreground">
-                      admin@alphaworld.com
-                    </p>
+                    <p className="text-sm font-medium leading-none">Super Admin</p>
+
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+
+                <DropdownMenuItem 
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="cursor-pointer"
+                >
+                  {isLoggingOut ? 'Logging out...' : 'Log out'}
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

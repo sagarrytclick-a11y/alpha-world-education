@@ -2,15 +2,37 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Exam from "@/models/Exam";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get query parameters for pagination
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+
     await connectDB();
-    const exams = await Exam.find({}).sort({ display_order: 1, name: 1 });
+    
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const total = await Exam.countDocuments();
+    
+    // Get paginated exams
+    const exams = await Exam.find({})
+      .sort({ display_order: 1, name: 1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const totalPages = Math.ceil(total / limit);
     
     return NextResponse.json({
       success: true,
       message: "Exams fetched successfully",
       data: exams,
+      total,
+      page,
+      totalPages,
+      hasMore: page < totalPages
     });
   } catch (error) {
     console.error("Error fetching exams:", error);
