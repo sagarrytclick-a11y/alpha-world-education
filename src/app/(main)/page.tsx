@@ -14,7 +14,6 @@ import ProcessJourney from "@/app/Components/ProcessJourney";
 import Services from "@/app/Components/Services";
 import StudentTestimonials from "@/app/Components/StudentTestimonials";
 import StudyPrograms from "@/app/Components/StudyPrograms";
-import SuccessStories from "@/app/Components/SuccessStories";
 
 const page = () => {
   return (

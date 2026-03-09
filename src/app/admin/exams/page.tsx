@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useMemo } from 'react'
 import { AdminTable } from '@/components/admin/AdminTable'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminForm } from '@/components/admin/AdminForm'
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -16,7 +16,6 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
-import { generateSlug } from '@/lib/slug'
 import { useAdminExamsPaginated, useSaveExam, useDeleteExam } from '@/hooks/useAdminExams'
 import { toast } from 'sonner'
 import {
@@ -26,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { ExamProvider, useExamContext } from '@/context/ExamContext'
 
 // Function to generate a sensible and clean slug
 const generateSensibleSlug = (text: string): string => {
@@ -108,63 +108,29 @@ interface Exam {
     total_marks: number
     passing_marks: number
   },
-  actions?: any // Add actions key for the dropdown column
+  actions?: any
 }
 
-export default function SimpleExamsPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingExam, setEditingExam] = useState<Exam | null>(null)
-  const [activeTab, setActiveTab] = useState('basic')
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-
-  const [formData, setFormData] = useState<Exam>({
-    name: '',
-    slug: '',
-    short_name: '',
-    exam_type: 'International',
-    conducting_body: '',
-    exam_mode: 'Online',
-    frequency: 'Monthly',
-    description: '',
-    is_active: true,
-    display_order: 0,
-    hero_section: {
-      title: '',
-      subtitle: '',
-      image: ''
-    },
-    overview: {
-      title: 'Overview',
-      content: '',
-      key_highlights: [] as string[]
-    },
-    registration: {
-      title: 'Registration',
-      description: '',
-      bullet_points: [] as string[]
-    },
-    exam_pattern: {
-      title: 'Exam Pattern',
-      description: '',
-      total_duration_mins: 120,
-      score_range: '0-100',
-      table_data: [] as Array<{section: string, questions: number, duration_mins: number}>
-    },
-    exam_dates: {
-      title: 'Important Dates',
-      important_dates: [] as Array<{event: string, date: Date}>
-    },
-    result_statistics: {
-      title: 'Result Statistics',
-      description: '',
-      passing_criteria: '',
-      total_marks: 100,
-      passing_marks: 40
-    }
-  })
+function ExamsPageContent() {
+  // Use exam context for all state management
+  const {
+    isModalOpen,
+    editingExam,
+    activeTab,
+    currentPage,
+    itemsPerPage,
+    formData,
+    setFormData,
+    openModal,
+    closeModal,
+    openEditModal,
+    updateFormData,
+    resetForm,
+    setActiveTab,
+    setCurrentPage,
+    setItemsPerPage,
+    resetModalStates,
+  } = useExamContext()
   
   // TanStack Query hooks
   const { data: paginatedData, isLoading: dataLoading } = useAdminExamsPaginated(currentPage, itemsPerPage)
@@ -353,8 +319,8 @@ export default function SimpleExamsPage() {
       
       console.log('✅ Exam saved successfully!')
       toast.success(editingExam ? 'Exam updated successfully!' : 'Exam created successfully!')
-      setIsModalOpen(false)
-      setEditingExam(null)
+      closeModal()
+      resetModalStates()
       
     } catch (error) {
       console.error('❌ Error saving exam:', error)
@@ -364,108 +330,13 @@ export default function SimpleExamsPage() {
   }
 
   const handleEditExam = (exam: Exam) => {
-    console.log('🔍 DEBUG: Loading exam for edit:', exam)
-    
-    setEditingExam(exam)
-    
-    // Initialize form with ALL existing exam data
-    setFormData({
-        name: exam.name || '',
-        slug: exam.slug || '',
-        short_name: exam.short_name || '',
-        exam_type: exam.exam_type || 'International',
-        conducting_body: exam.conducting_body || '',
-        exam_mode: exam.exam_mode || 'Online',
-        frequency: exam.frequency || 'Monthly',
-        description: exam.description || '',
-        is_active: exam.is_active !== undefined ? exam.is_active : true,
-        display_order: exam.display_order || 0,
-        hero_section: {
-          title: exam.hero_section?.title || '',
-          subtitle: exam.hero_section?.subtitle || '',
-          image: exam.hero_section?.image || ''
-        },
-        overview: {
-          title: exam.overview?.title || 'Overview',
-          content: exam.overview?.content || '',
-          key_highlights: exam.overview?.key_highlights || []
-        },
-        registration: {
-          title: exam.registration?.title || 'Registration',
-          description: exam.registration?.description || '',
-          bullet_points: exam.registration?.bullet_points || []
-        },
-        exam_pattern: {
-          title: exam.exam_pattern?.title || 'Exam Pattern',
-          description: exam.exam_pattern?.description || '',
-          total_duration_mins: exam.exam_pattern?.total_duration_mins || 120,
-          score_range: exam.exam_pattern?.score_range || '0-100',
-          table_data: exam.exam_pattern?.table_data || []
-        },
-        exam_dates: {
-          title: exam.exam_dates?.title || 'Important Dates',
-          important_dates: exam.exam_dates?.important_dates || []
-        },
-        result_statistics: {
-          title: exam.result_statistics?.title || 'Result Statistics',
-          description: exam.result_statistics?.description || '',
-          passing_criteria: exam.result_statistics?.passing_criteria || '',
-          total_marks: exam.result_statistics?.total_marks || 100,
-          passing_marks: exam.result_statistics?.passing_marks || 50
-        }
-      })
-    setIsModalOpen(true)
+    openEditModal(exam)
   }
 
   const handleAddExam = () => {
-    setEditingExam(null)
-    setFormData({
-      name: '',
-      slug: '',
-      short_name: '',
-      exam_type: 'International',
-      conducting_body: '',
-      exam_mode: 'Online',
-      frequency: 'Monthly',
-      description: '',
-      is_active: true,
-      display_order: 0,
-      hero_section: {
-        title: '',
-        subtitle: '',
-        image: ''
-      },
-      overview: {
-        title: 'Overview',
-        content: '',
-        key_highlights: []
-      },
-      registration: {
-        title: 'Registration',
-        description: '',
-        bullet_points: []
-      },
-      exam_pattern: {
-        title: 'Exam Pattern',
-        description: '',
-        total_duration_mins: 120,
-        score_range: '0-100',
-        table_data: [] as Array<{section: string, questions: number, duration_mins: number}>
-      },
-      exam_dates: {
-        title: 'Important Dates',
-        important_dates: []
-      },
-      result_statistics: {
-        title: 'Result Statistics',
-        description: '',
-        passing_criteria: '',
-        total_marks: 100,
-        passing_marks: 40
-      }
-    })
+    resetForm()
     setActiveTab('basic')
-    setIsModalOpen(true)
+    openModal()
   }
 
   const basicFields = [
@@ -705,7 +576,7 @@ export default function SimpleExamsPage() {
 
       <AdminModal 
         open={isModalOpen} 
-        onOpenChange={setIsModalOpen} 
+        onOpenChange={closeModal} 
         title="Manage Exam"
         showFooter={false}
         size="xl"
@@ -725,7 +596,7 @@ export default function SimpleExamsPage() {
               fields={basicFields}
               data={formData as unknown as Record<string, unknown>}
               onChange={(name, value) => {
-                setFormData(prev => ({ ...prev, [name]: value }))
+                updateFormData(name, value)
                 // Auto-generate sensible slug when name changes
                 if (name === 'name') {
                   const slug = generateSensibleSlug(value as string)
@@ -1131,7 +1002,7 @@ export default function SimpleExamsPage() {
         </Tabs>
 
         <div className="flex justify-end gap-2 mt-6">
-          <Button variant="outline" onClick={() => setIsModalOpen(false)}>
+          <Button variant="outline" onClick={() => closeModal()}>
             Cancel
           </Button>
           <Button onClick={handleSaveExam} disabled={saveExamMutation.isPending}>
@@ -1140,5 +1011,13 @@ export default function SimpleExamsPage() {
         </div>
       </AdminModal>
     </div>
+  )
+}
+
+export default function SimpleExamsPage() {
+  return (
+    <ExamProvider>
+      <ExamsPageContent />
+    </ExamProvider>
   )
 }

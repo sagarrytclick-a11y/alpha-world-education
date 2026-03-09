@@ -1,7 +1,6 @@
 "use client"
 
-import React from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
@@ -100,7 +99,7 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex h-[400px] w-full items-center justify-center">
+      <div className="flex h-100 w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
       </div>
     )

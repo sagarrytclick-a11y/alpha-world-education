@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useMemo } from 'react'
 import { AdminTable, createEditAction, createDeleteAction } from '@/components/admin/AdminTable'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminForm } from '@/components/admin/AdminForm'
@@ -14,9 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { generateSlug } from '@/lib/slug'
 import { useAdminCountriesPaginated, useSaveCountry, useDeleteCountry } from '@/hooks/useAdminCountries'
 import { toast } from 'sonner'
+import { CountryProvider, useCountryContext } from '@/context/CountryContext'
 
 export interface Country {
   _id: string
@@ -31,26 +31,29 @@ export interface Country {
   updatedAt: string
 }
 
-export default function CountriesPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingCountry, setEditingCountry] = useState<Country | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [countryToDelete, setCountryToDelete] = useState<Country | null>(null)
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    slug: '',
-    flag: '',
-    description: '',
-    meta_title: '',
-    meta_description: '',
-    is_active: true
-  })
-  
+function CountriesPageContent() {
+  // Use country context for all state management
+  const {
+    isModalOpen,
+    editingCountry,
+    deleteModalOpen,
+    countryToDelete,
+    currentPage,
+    itemsPerPage,
+    formData,
+    setFormData,
+    openModal,
+    closeModal,
+    openEditModal,
+    openDeleteModal,
+    closeDeleteModal,
+    updateFormData,
+    resetForm,
+    setCurrentPage,
+    setItemsPerPage,
+    resetModalStates,
+  } = useCountryContext()
+
   // TanStack Query hooks
   const { data: paginatedData, isLoading: dataLoading } = useAdminCountriesPaginated(currentPage, itemsPerPage)
   const saveCountryMutation = useSaveCountry()
@@ -107,21 +110,10 @@ export default function CountriesPage() {
 
   const actions = [
     createEditAction((country: Country) => {
-      setEditingCountry(country)
-      setFormData({
-        name: country.name,
-        slug: country.slug,
-        flag: country.flag,
-        description: country.description,
-        meta_title: country.meta_title,
-        meta_description: country.meta_description,
-        is_active: country.is_active
-      })
-      setIsModalOpen(true)
+      openEditModal(country)
     }),
     createDeleteAction((country: Country) => {
-      setCountryToDelete(country)
-      setDeleteModalOpen(true)
+      openDeleteModal(country)
     })
   ]
 
@@ -179,29 +171,20 @@ export default function CountriesPage() {
   ]
 
   const handleAddCountry = () => {
-    setEditingCountry(null)
-    setFormData({
-      name: '',
-      slug: '',
-      flag: '',
-      description: '',
-      meta_title: '',
-      meta_description: '',
-      is_active: true
-    })
-    setIsModalOpen(true)
+    resetForm()
+    openModal()
   }
 
   const handleSaveCountry = async () => {
     console.log('🔥 COUNTRY SAVE BUTTON CLICKED! Starting validation...')
     console.log('📝 Current country formData:', formData)
     console.log('📝 Is editing country:', editingCountry ? 'YES' : 'NO')
-    
+
     // Collect all missing fields
     const validationErrors = []
-    
+
     console.log('🔍 Checking each country field for validation...')
-    
+
     // Basic Info Validation
     if (!formData.name?.trim()) {
       validationErrors.push('Country Name is required')
@@ -215,7 +198,7 @@ export default function CountriesPage() {
       validationErrors.push('Country Description is required')
       console.log('❌ Country Description validation failed')
     }
-    
+
     // Flag Validation (optional but if provided, should be a valid emoji)
     if (formData.flag?.trim()) {
       // Simple emoji validation - check if it contains emoji characters
@@ -227,7 +210,7 @@ export default function CountriesPage() {
         console.log('✅ Flag validation passed - valid emoji')
       }
     }
-    
+
     // Meta fields validation (optional but if provided, should have reasonable length)
     if (formData.meta_title?.trim() && formData.meta_title.length > 60) {
       validationErrors.push('Meta title should be 60 characters or less for SEO')
@@ -237,9 +220,9 @@ export default function CountriesPage() {
       validationErrors.push('Meta description should be 160 characters or less for SEO')
       console.log('❌ Meta description validation failed - too long')
     }
-    
+
     console.log('📋 Final validationErrors array:', validationErrors)
-    
+
     // Show alert for missing fields (works for both ADD and EDIT)
     if (validationErrors.length > 0) {
       const alertMessage = `Please fill in the following required fields:\n\n${validationErrors.map((error, index) => `${index + 1}. ${error}`).join('\n')}`
@@ -252,22 +235,22 @@ export default function CountriesPage() {
     try {
       console.log('🚀 Starting country save process...')
       console.log('📝 Country form data:', formData)
-      
+
       const payload = {
         ...formData,
         ...(editingCountry && { _id: editingCountry._id })
       }
-      
+
       console.log('📦 Country request payload:', payload)
       console.log('🔥 About to call saveCountryMutation.mutateAsync...')
-      
+
       await saveCountryMutation.mutateAsync(payload)
-      
+
       console.log('✅ Country saved successfully!')
       toast.success(editingCountry ? 'Country updated successfully!' : 'Country created successfully!')
-      setIsModalOpen(false)
-      setEditingCountry(null)
-      
+      closeModal()
+      resetModalStates()
+
     } catch (error) {
       console.error('❌ Error saving country:', error)
       console.error('💥 Error stack:', error instanceof Error ? error.stack : 'No stack available')
@@ -277,12 +260,11 @@ export default function CountriesPage() {
 
   const handleDeleteCountry = async () => {
     if (!countryToDelete) return
-    
+
     try {
       await deleteCountryMutation.mutateAsync(countryToDelete._id)
       toast.success('Country deleted successfully!')
-      setDeleteModalOpen(false)
-      setCountryToDelete(null)
+      closeDeleteModal()
     } catch (error) {
       console.error('Error deleting country:', error)
       toast.error('Error deleting country')
@@ -318,7 +300,7 @@ export default function CountriesPage() {
         {/* Add/Edit Modal */}
         <AdminModal
           open={isModalOpen}
-          onOpenChange={setIsModalOpen}
+          onOpenChange={closeModal}
           title={editingCountry ? 'Edit Country' : 'Add New Country'}
           description={editingCountry ? 'Update country information' : 'Add a new country to the system'}
           onConfirm={handleSaveCountry}
@@ -327,17 +309,8 @@ export default function CountriesPage() {
         >
           <AdminForm
             fields={formFields}
-            data={formData}
-            onChange={(field, value) => {
-              setFormData(prev => ({ 
-                ...prev, 
-                [field]: value,
-                // Auto-generate slug when name changes and slug is empty or being edited for the first time
-                ...(field === 'name' && (!prev.slug || prev.slug === generateSlug(prev.name)) ? {
-                  slug: generateSlug(value as string)
-                } : {})
-              }))
-            }}
+            data={formData as unknown as Record<string, unknown>}
+            onChange={updateFormData}
             loading={saveCountryMutation.isPending}
           />
         </AdminModal>
@@ -345,7 +318,7 @@ export default function CountriesPage() {
         {/* Delete Confirmation Modal */}
         <AdminModal
           open={deleteModalOpen}
-          onOpenChange={setDeleteModalOpen}
+          onOpenChange={(open) => !open && closeDeleteModal()}
           title="Delete Country"
           description={`Are you sure you want to delete "${countryToDelete?.name}"? This action cannot be undone.`}
           confirmText="Delete"
@@ -449,5 +422,13 @@ export default function CountriesPage() {
       )}
       </div>
     </div>
+  )
+}
+
+export default function CountriesPage() {
+  return (
+    <CountryProvider>
+      <CountriesPageContent />
+    </CountryProvider>
   )
 }
