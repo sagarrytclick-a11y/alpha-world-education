@@ -117,14 +117,57 @@ export function useUpdateEnquiryStatus() {
       const result = await response.json();
       console.log(`✅ [HOOK] Success response:`, result);
     },
+    onMutate: async ({ id, status }) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['admin-enquiries'] })
+      await queryClient.cancelQueries({ queryKey: ['admin-enquiries', 'paginated'] })
+      
+      // Snapshot previous values
+      const previousEnquiries = queryClient.getQueryData(['admin-enquiries'])
+      const previousPaginatedEnquiries = queryClient.getQueryData(['admin-enquiries', 'paginated'])
+      
+      // Optimistically update the cache
+      queryClient.setQueryData(['admin-enquiries'], (old: any) => {
+        if (!old) return old
+        return old.map((enquiry: Enquiry) => 
+          enquiry._id === id 
+            ? { ...enquiry, status: status as Enquiry['status'], updatedAt: new Date().toISOString() } 
+            : enquiry
+        )
+      })
+      
+      // Optimistically update paginated queries
+      queryClient.setQueriesData({ queryKey: ['admin-enquiries', 'paginated'] }, (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          enquiries: old.enquiries.map((enquiry: Enquiry) => 
+            enquiry._id === id 
+              ? { ...enquiry, status: status as Enquiry['status'], updatedAt: new Date().toISOString() } 
+              : enquiry
+          )
+        }
+      })
+      
+      // Return context for rollback on error
+      return { previousEnquiries, previousPaginatedEnquiries }
+    },
+    onError: (error, variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousEnquiries) {
+        queryClient.setQueryData(['admin-enquiries'], context.previousEnquiries)
+      }
+      if (context?.previousPaginatedEnquiries) {
+        queryClient.setQueriesData({ queryKey: ['admin-enquiries', 'paginated'] }, context.previousPaginatedEnquiries)
+      }
+      toast.error(error.message || 'Failed to update enquiry status')
+      console.error('Update enquiry status error:', error)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-enquiries'] })
       queryClient.invalidateQueries({ queryKey: ['admin-enquiries', 'paginated'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard', 'stats'] }) // Update dashboard stats
       toast.success('Enquiry status updated successfully!')
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update enquiry status')
-      console.error('Update enquiry status error:', error)
     },
   })
 }
