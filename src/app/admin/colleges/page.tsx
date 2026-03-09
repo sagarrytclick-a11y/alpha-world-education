@@ -17,7 +17,7 @@ import {
 import { Plus, GraduationCap, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 import { dummyCountries } from '@/data/dummyData'
 import { generateSlug } from '@/lib/slug'
-import { useAdminColleges, useAdminCountries, useSaveCollege, useDeleteCollege } from '@/hooks/useAdminColleges'
+import { useAdminCollegesPaginated, useAdminCountries, useSaveCollege, useDeleteCollege } from '@/hooks/useAdminColleges'
 import { toast } from 'sonner'
 
 interface AdminCountry {
@@ -107,102 +107,76 @@ export default function CollegesPage() {
   const [itemsPerPage, setItemsPerPage] = useState(10)
   
   // TanStack Query hooks
-  const { data: colleges = [], isLoading: dataLoading, error: collegesError } = useAdminColleges()
+  const { data: paginatedData, isLoading: dataLoading } = useAdminCollegesPaginated(currentPage, itemsPerPage)
   const { data: countries = dummyCountries } = useAdminCountries()
   const saveCollegeMutation = useSaveCollege()
   const deleteCollegeMutation = useDeleteCollege()
+
+  const colleges = paginatedData?.colleges || []
+  const totalCount = paginatedData?.total || 0
+  const serverTotalPages = paginatedData?.totalPages || 0
   
   const [formData, setFormData] = useState({
     // Basic Info
-    name: 'Default College Name',
-    slug: 'default-college-name',
+    name: '',
+    slug: '',
     country_ref: '',
     exams: [] as string[],
     banner_url: '',
     is_active: true,
-    establishment_year: '2024',
-    
+    establishment_year: '',
+
     // Overview
     overview_title: 'Overview',
-    overview_description: 'This is a default overview description for the college with comprehensive information about programs, facilities, and academic excellence.',
-    
+    overview_description: '',
+
     // Key Highlights
     key_highlights_title: 'Key Highlights',
-    key_highlights_description: 'Key highlights description featuring the main advantages and features of the institution.',
-    key_highlights_features: ['Excellent Faculty', 'Modern Infrastructure', 'Research Opportunities'],
-    
+    key_highlights_description: '',
+    key_highlights_features: [] as string[],
+
     // Why Choose Us
     why_choose_us_title: 'Why Choose Us',
-    why_choose_us_description: 'Why choose us description explaining the unique benefits and advantages of selecting this institution.',
-    why_choose_us_features: [
-      { title: 'Quality Education', description: 'We provide high-quality education with experienced faculty' },
-      { title: 'Affordable Fees', description: 'Competitive fee structure for all programs' }
-    ],
-    
+    why_choose_us_description: '',
+    why_choose_us_features: [] as { title: string; description: string }[],
+
     // Ranking & Recognition
     ranking_title: 'Ranking & Recognition',
-    ranking_description: 'Ranking description highlighting the institution position and achievements.',
-    country_ranking: '#1 in Country',
-    world_ranking: 'Top 500 Global',
-    accreditation: ['NAAC Accreditation', 'ISO Certified'],
-    
+    ranking_description: '',
+    country_ranking: '',
+    world_ranking: '',
+    accreditation: [] as string[],
+
     // Admission Process
     admission_process_title: 'Admission Process',
-    admission_process_description: 'Admission process description explaining the step-by-step procedure for enrollment.',
-    admission_process_steps: ['Online Application', 'Document Verification', 'Interview Process'],
-    
+    admission_process_description: '',
+    admission_process_steps: [] as string[],
+
     // Documents Required
     documents_required_title: 'Documents Required',
-    documents_required_description: 'Documents required description listing all necessary paperwork for admission.',
-    documents_required_documents: ['High School Transcript', 'ID Proof', 'Passport Copy'],
-    
+    documents_required_description: '',
+    documents_required_documents: [] as string[],
+
     // Fees Structure
     fees_structure_title: 'Fees Structure',
-    fees_structure_description: 'Fees structure description detailing the cost breakdown for various programs.',
-    fees_structure_courses: [
-      { course_name: 'Computer Science', duration: '4 Years', annual_tuition_fee: '$15,000' },
-      { course_name: 'Business Administration', duration: '2 Years', annual_tuition_fee: '$12,000' }
-    ],
-    
+    fees_structure_description: '',
+    fees_structure_courses: [] as { course_name: string; duration: string; annual_tuition_fee: string }[],
+
     // Campus Highlights
     campus_highlights_title: 'Campus Highlights',
-    campus_highlights_description: 'Campus highlights description showcasing the facilities and environment.',
-    campus_highlights_highlights: ['Modern Library', 'Sports Complex', 'Hostel Facilities']
+    campus_highlights_description: '',
+    campus_highlights_highlights: [] as string[],
   })
 
-  // Filter colleges based on search and country using useMemo
-  const filteredColleges = useMemo(() => {
-    let filtered = colleges
-
-    if (selectedCountry !== 'all') {
-      filtered = filtered.filter(college => {
-        if (!college.country_ref) return false
-        const countrySlug = typeof college.country_ref === 'string' 
-          ? college.country_ref 
-          : college.country_ref.slug
-        return countrySlug === selectedCountry
-      })
-    }
-
-    if (searchTerm) {
-      filtered = filtered.filter(college => 
-        college.name.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    return filtered
-  }, [colleges, searchTerm, selectedCountry])
-
-  // Pagination logic
-  const paginatedColleges = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    const endIndex = startIndex + itemsPerPage
-    return filteredColleges.slice(startIndex, endIndex)
-  }, [filteredColleges, currentPage, itemsPerPage])
-
-  const totalPages = Math.ceil(filteredColleges.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage + 1
-  const endIndex = Math.min(currentPage * itemsPerPage, filteredColleges.length)
+  // Debug logging
+  console.log('🔍 DEBUG: Colleges page state:', {
+    currentPage,
+    itemsPerPage,
+    paginatedData,
+    colleges,
+    totalCount,
+    serverTotalPages
+  })
 
   // Reset to page 1 when filters change
   React.useEffect(() => {
@@ -380,7 +354,7 @@ export default function CollegesPage() {
         // Basic Info
         name: college.name || '',
         slug: college.slug || '',
-        country_ref: typeof college.country_ref === 'string' ? college.country_ref : college.country_ref?.slug || '',
+        country_ref: (typeof college.country_ref === 'object' && college.country_ref?.slug) ? college.country_ref.slug : (typeof college.country_ref === 'string' ? college.country_ref : '') || '',
         exams: college.exams || [],
         banner_url: college.banner_url || '',
         is_active: college.is_active !== undefined ? college.is_active : true,
@@ -790,7 +764,7 @@ export default function CollegesPage() {
           <div>
             <h2 className="text-lg font-semibold text-gray-900">All Colleges</h2>
             <p className="text-sm text-gray-500">
-              {filteredColleges.length > 0 ? `${startIndex}-${endIndex} of ${filteredColleges.length} colleges` : '0 colleges'}
+              {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} colleges` : '0 colleges'}
             </p>
           </div>
           <Button onClick={handleAddCollege} className="flex items-center space-x-2">
@@ -832,7 +806,7 @@ export default function CollegesPage() {
 
         {/* Colleges Table */}
         <AdminTable
-          data={paginatedColleges}
+          data={colleges}
           columns={columns}
           actions={actions}
           loading={dataLoading}
@@ -840,7 +814,7 @@ export default function CollegesPage() {
         />
 
         {/* Pagination Controls */}
-        {filteredColleges.length > itemsPerPage && (
+        {totalCount > itemsPerPage && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-600">Items per page:</span>
@@ -873,14 +847,14 @@ export default function CollegesPage() {
               </Button>
               
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                {Array.from({ length: Math.min(5, serverTotalPages) }, (_, i) => {
                   let pageNum
-                  if (totalPages <= 5) {
+                  if (serverTotalPages <= 5) {
                     pageNum = i + 1
                   } else if (currentPage <= 3) {
                     pageNum = i + 1
-                  } else if (currentPage >= totalPages - 2) {
-                    pageNum = totalPages - 4 + i
+                  } else if (currentPage >= serverTotalPages - 2) {
+                    pageNum = serverTotalPages - 4 + i
                   } else {
                     pageNum = currentPage - 2 + i
                   }
@@ -898,16 +872,16 @@ export default function CollegesPage() {
                   )
                 })}
                 
-                {totalPages > 5 && (
+                {serverTotalPages > 5 && (
                   <>
                     <span className="px-2 text-sm text-gray-500">...</span>
                     <Button
-                      variant={currentPage === totalPages ? "default" : "outline"}
+                      variant={currentPage === serverTotalPages ? "default" : "outline"}
                       size="sm"
-                      onClick={() => setCurrentPage(totalPages)}
+                      onClick={() => setCurrentPage(serverTotalPages)}
                       className="w-8 h-8 p-0"
                     >
-                      {totalPages}
+                      {serverTotalPages}
                     </Button>
                   </>
                 )}
@@ -916,8 +890,8 @@ export default function CollegesPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, serverTotalPages))}
+                disabled={currentPage === serverTotalPages}
                 className="flex items-center gap-1"
               >
                 Next

@@ -150,6 +150,61 @@ const deleteCollege = async (id: string): Promise<void> => {
   }
 }
 
+// Fetch paginated colleges for admin
+const fetchAdminCollegesPaginated = async ({ 
+  page = 1, 
+  limit = 10 
+}): Promise<{
+  colleges: AdminCollege[]
+  total: number
+  page: number
+  totalPages: number
+  hasMore: boolean
+}> => {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString()
+  })
+
+  console.log('🔍 DEBUG: Fetching colleges with params:', params.toString())
+
+  const response = await fetch(`/api/admin/colleges?${params}`)
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`)
+  }
+  
+  const result = await response.json()
+  console.log('🔍 DEBUG: Colleges API response:', result)
+  
+  if (!result.success) {
+    throw new Error(result.message || 'Failed to fetch colleges')
+  }
+  
+  const colleges = result.data || []
+  const total = result.total || colleges.length
+  
+  return {
+    colleges,
+    total,
+    page,
+    totalPages: Math.ceil(total / limit),
+    hasMore: colleges.length === limit
+  }
+}
+
+// Hook for fetching paginated colleges
+export function useAdminCollegesPaginated(page: number, limit: number = 10) {
+  return useQuery({
+    queryKey: ['admin', 'colleges', 'paginated', page, limit],
+    queryFn: () => fetchAdminCollegesPaginated({ page, limit }),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: 2,
+    refetchOnWindowFocus: false,
+    enabled: true, // Ensure the query is always enabled
+  })
+}
+
 // Hooks
 export function useAdminColleges() {
   return useQuery({
@@ -178,13 +233,60 @@ export function useSaveCollege() {
   
   return useMutation({
     mutationFn: saveCollege,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges'] })
+    onMutate: async (newCollege) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['admin', 'colleges'] })
+      await queryClient.cancelQueries({ queryKey: ['admin', 'colleges', 'paginated'] })
+      
+      // Snapshot previous values
+      const previousColleges = queryClient.getQueryData(['admin', 'colleges'])
+      const previousPaginatedColleges = queryClient.getQueryData(['admin', 'colleges', 'paginated'])
+      
+      // Optimistically update the cache for new college
+      if (!newCollege._id) {
+        const optimisticCollege: AdminCollege = {
+          ...newCollege,
+          _id: `temp-${Date.now()}`,
+          is_active: true,
+          display_order: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as AdminCollege
+        
+        queryClient.setQueryData(['admin', 'colleges'], (old: any) => {
+          if (!old) return [optimisticCollege]
+          return [optimisticCollege, ...old]
+        })
+        
+        // Update paginated queries
+        queryClient.setQueriesData({ queryKey: ['admin', 'colleges', 'paginated'] }, (old: any) => {
+          if (!old) return old
+          return {
+            ...old,
+            colleges: [optimisticCollege, ...old.colleges],
+            total: old.total + 1
+          }
+        })
+      }
+      
+      return { previousColleges, previousPaginatedColleges }
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousColleges) {
+        queryClient.setQueryData(['admin', 'colleges'], context.previousColleges)
+      }
+      if (context?.previousPaginatedColleges) {
+        queryClient.setQueriesData({ queryKey: ['admin', 'colleges', 'paginated'] }, context.previousPaginatedColleges)
+      }
       console.error('Error saving college:', error)
       throw error
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges', 'paginated'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard', 'stats'] })
+    },
   })
 }
 
@@ -193,12 +295,48 @@ export function useDeleteCollege() {
   
   return useMutation({
     mutationFn: deleteCollege,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges'] })
+    onMutate: async (deletedId) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['admin', 'colleges'] })
+      await queryClient.cancelQueries({ queryKey: ['admin', 'colleges', 'paginated'] })
+      
+      // Snapshot previous values
+      const previousColleges = queryClient.getQueryData(['admin', 'colleges'])
+      const previousPaginatedColleges = queryClient.getQueryData(['admin', 'colleges', 'paginated'])
+      
+      // Optimistically remove from cache
+      queryClient.setQueryData(['admin', 'colleges'], (old: any) => {
+        if (!old) return old
+        return old.filter((college: AdminCollege) => college._id !== deletedId)
+      })
+      
+      // Update paginated queries
+      queryClient.setQueriesData({ queryKey: ['admin', 'colleges', 'paginated'] }, (old: any) => {
+        if (!old) return old
+        return {
+          ...old,
+          colleges: old.colleges.filter((college: AdminCollege) => college._id !== deletedId),
+          total: Math.max(0, old.total - 1)
+        }
+      })
+      
+      return { previousColleges, previousPaginatedColleges }
     },
-    onError: (error) => {
+    onError: (error, variables, context) => {
+      // Rollback optimistic updates on error
+      if (context?.previousColleges) {
+        queryClient.setQueryData(['admin', 'colleges'], context.previousColleges)
+      }
+      if (context?.previousPaginatedColleges) {
+        queryClient.setQueriesData({ queryKey: ['admin', 'colleges', 'paginated'] }, context.previousPaginatedColleges)
+      }
       console.error('Error deleting college:', error)
       throw error
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'colleges', 'paginated'] })
+      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboard', 'stats'] })
+    },
   })
 }
