@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
+import React, { useMemo } from 'react'
 import { AdminTable, createEditAction, createDeleteAction, createViewAction } from '@/components/admin/AdminTable'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminForm } from '@/components/admin/AdminForm'
@@ -15,9 +15,9 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Plus, FileText, Search, Eye, ChevronLeft, ChevronRight } from 'lucide-react'
-import { generateSlug } from '@/lib/slug'
 import { useAdminBlogsPaginated, useSaveBlog, useDeleteBlog } from '@/hooks/useAdminBlogs'
 import { toast } from 'sonner'
+import { BlogProvider, useBlogContext } from '@/context/BlogContext'
 
 export interface Blog {
   _id: string
@@ -33,19 +33,35 @@ export interface Blog {
   updatedAt: string
 }
 
-export default function BlogsPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [editingBlog, setEditingBlog] = useState<Blog | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [blogToDelete, setBlogToDelete] = useState<Blog | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedStatus, setSelectedStatus] = useState<string>('all')
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  
+function BlogsPageContent() {
+  // Use blog context for all state management
+  const {
+    isModalOpen,
+    editingBlog,
+    deleteModalOpen,
+    blogToDelete,
+    searchTerm,
+    selectedCategory,
+    selectedStatus,
+    currentPage,
+    itemsPerPage,
+    formData,
+    setFormData,
+    openModal,
+    closeModal,
+    openEditModal,
+    openDeleteModal,
+    closeDeleteModal,
+    updateFormData,
+    resetForm,
+    setSearchTerm,
+    setSelectedCategory,
+    setSelectedStatus,
+    setCurrentPage,
+    setItemsPerPage,
+    resetModalStates,
+  } = useBlogContext()
+
   // TanStack Query hooks
   const { data: paginatedData, isLoading: dataLoading } = useAdminBlogsPaginated(currentPage, itemsPerPage, searchTerm, selectedCategory, selectedStatus)
   const saveBlogMutation = useSaveBlog()
@@ -54,36 +70,6 @@ export default function BlogsPage() {
   const blogs = paginatedData?.blogs || []
   const totalCount = paginatedData?.total || 0
   const serverTotalPages = paginatedData?.totalPages || 0
-
-  // Debug logging
-  console.log('🔍 DEBUG: Blogs page state:', {
-    currentPage,
-    itemsPerPage,
-    searchTerm,
-    selectedCategory,
-    selectedStatus,
-    paginatedData,
-    blogs,
-    totalCount,
-    serverTotalPages
-  })
-
-  // Reset to page 1 when filters change
-  React.useEffect(() => {
-    setCurrentPage(1)
-  }, [searchTerm, selectedCategory, selectedStatus])
-  
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    category: '',
-    tags: [] as string[],
-    content: '',
-    image: '',
-    related_exams: [] as string[],
-    is_active: true
-  })
-
 
   const columns = [
     {
@@ -139,46 +125,10 @@ export default function BlogsPage() {
       alert(`View blog: ${blog.title}`)
     }),
     createEditAction((blog: Blog) => {
-      console.log('🔍 DEBUG: Loading blog for edit:', blog)
-      console.log('🔍 DEBUG: Blog data being loaded:', blog)
-      console.log('🔍 DEBUG: Blog title:', blog.title)
-      console.log('🔍 DEBUG: Blog category:', blog.category)
-      console.log('🔍 DEBUG: Blog tags:', blog.tags)
-      console.log('🔍 DEBUG: Blog content:', blog.content)
-      console.log('🔍 DEBUG: Blog image:', blog.image)
-      console.log('🔍 DEBUG: Blog related_exams:', blog.related_exams)
-      console.log('🔍 DEBUG: Blog is_active:', blog.is_active)
-      
-      setEditingBlog(blog)
-      
-      // Properly extract and set all existing blog data when editing
-      setFormData({
-        title: blog.title || '',
-        slug: blog.slug || '',
-        category: blog.category || '',
-        tags: blog.tags || [],
-        content: blog.content || '',
-        image: blog.image || '',
-        related_exams: blog.related_exams || [],
-        is_active: blog.is_active !== undefined ? blog.is_active : true,
-      })
-      
-      console.log('📝 Form data after setting:', {
-        title: blog.title,
-        slug: blog.slug,
-        category: blog.category,
-        tags: blog.tags,
-        content: blog.content,
-        image: blog.image,
-        related_exams: blog.related_exams,
-        is_active: blog.is_active
-      })
-      
-      setIsModalOpen(true)
+      openEditModal(blog)
     }),
     createDeleteAction((blog: Blog) => {
-      setBlogToDelete(blog)
-      setDeleteModalOpen(true)
+      openDeleteModal(blog)
     })
   ]
 
@@ -253,18 +203,8 @@ export default function BlogsPage() {
   ]
 
   const handleAddBlog = () => {
-    setEditingBlog(null)
-    setFormData({
-      title: '',
-      slug: '',
-      category: '',
-      tags: [],
-      content: '',
-      image: '',
-      related_exams: [],
-      is_active: true
-    })
-    setIsModalOpen(true)
+    resetForm()
+    openModal()
   }
 
   const handleSaveBlog = async () => {
@@ -310,17 +250,6 @@ export default function BlogsPage() {
       }
     }
     
-    // Image URL Validation (optional but if provided, should be valid)
-    if (formData.image?.trim()) {
-      try {
-        new URL(formData.image)
-        console.log('✅ Blog Image URL is valid')
-      } catch {
-        validationErrors.push('Blog Image URL must be a valid URL')
-        console.log('❌ Blog Image URL is invalid')
-      }
-    }
-    
     console.log('📋 Final validationErrors array:', validationErrors)
     
     // Show alert for missing fields (works for both ADD and EDIT)
@@ -348,8 +277,8 @@ export default function BlogsPage() {
       
       console.log('✅ Blog saved successfully!')
       toast.success(editingBlog ? 'Blog post updated successfully!' : 'Blog post created successfully!')
-      setIsModalOpen(false)
-      setEditingBlog(null)
+      closeModal()
+      resetModalStates()
       
     } catch (error) {
       console.error('❌ Error saving blog:', error)
@@ -364,8 +293,7 @@ export default function BlogsPage() {
     try {
       await deleteBlogMutation.mutateAsync(blogToDelete._id)
       toast.success('Blog post deleted successfully!')
-      setDeleteModalOpen(false)
-      setBlogToDelete(null)
+      closeDeleteModal()
     } catch (error) {
       console.error('Error deleting blog:', error)
       toast.error('Error deleting blog')
@@ -373,118 +301,110 @@ export default function BlogsPage() {
   }
 
   return (
-    <div>
     <div className="space-y-6">
       {/* Filters and Add button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">All Blog Posts</h2>
-            <p className="text-sm text-gray-500">
-              {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} posts` : '0 posts'}
-            </p>
-          </div>
-          <Button onClick={handleAddBlog} className="flex items-center space-x-2">
-            <Plus className="h-4 w-4" />
-            <span>Add Blog Post</span>
-          </Button>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">All Blog Posts</h2>
+          <p className="text-sm text-gray-500">
+            {totalCount > 0 ? `${((currentPage - 1) * itemsPerPage) + 1}-${Math.min(currentPage * itemsPerPage, totalCount)} of ${totalCount} posts` : '0 posts'}
+          </p>
         </div>
+        <Button onClick={handleAddBlog} className="flex items-center space-x-2">
+          <Plus className="h-4 w-4" />
+          <span>Add Blog Post</span>
+        </Button>
+      </div>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Search blogs..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-          <div className="w-full sm:w-48">
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {educationalCategories.map((category) => (
-                  <SelectItem key={category} value={category}>
-                    {category}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="w-full sm:w-48">
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="published">Published</SelectItem>
-                <SelectItem value="draft">Draft</SelectItem>
-              </SelectContent>
-            </Select>
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Input
+              placeholder="Search blogs..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
+        <div className="w-full sm:w-48">
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              {educationalCategories.map((category) => (
+                <SelectItem key={category} value={category}>
+                  {category}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="w-full sm:w-48">
+          <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-        {/* Blogs Table */}
-        <AdminTable
-          data={blogs}
-          columns={columns}
-          actions={actions}
-          loading={dataLoading}
-          emptyMessage="No blog posts found. Add your first blog post to get started."
-        />
+      {/* Blogs Table */}
+      <AdminTable
+        data={blogs}
+        columns={columns}
+        actions={actions}
+        loading={dataLoading}
+        emptyMessage="No blog posts found. Add your first blog post to get started."
+      />
 
-        {/* Add/Edit Modal */}
-        <AdminModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          title={editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
-          description={editingBlog ? 'Update blog post information' : 'Create a new blog post'}
-          onConfirm={handleSaveBlog}
+      {/* Add/Edit Modal */}
+      <AdminModal
+        open={isModalOpen}
+        onOpenChange={closeModal}
+        title={editingBlog ? 'Edit Blog Post' : 'Create New Blog Post'}
+        description={editingBlog ? 'Update blog post information' : 'Create a new blog post'}
+        onConfirm={handleSaveBlog}
+        loading={saveBlogMutation.isPending}
+        size="xl"
+      >
+        <AdminForm
+          fields={formFields}
+          data={formData as unknown as Record<string, unknown>}
+          onChange={(field: string, value: unknown) => {
+            console.log(`📝 Blog form field changed: ${field} = ${value}`)
+            updateFormData(field, value)
+          }}
           loading={saveBlogMutation.isPending}
-          size="xl"
-        >
-          <AdminForm
-            fields={formFields}
-            data={formData}
-            onChange={(field: string, value: unknown) => {
-              console.log(`📝 Blog form field changed: ${field} = ${value}`)
-              setFormData(prev => ({ 
-                ...prev, 
-                [field]: value,
-                // Auto-generate slug when title changes and slug is empty or being edited for the first time
-                ...(field === 'title' && (!prev.slug || prev.slug === generateSlug(prev.title)) ? {
-                  slug: generateSlug(value as string)
-                } : {})
-              }))
-            }}
-            loading={saveBlogMutation.isPending}
-          />
-        </AdminModal>
+        />
+      </AdminModal>
 
-        {/* Delete Confirmation Modal */}
-        <AdminModal
-          open={deleteModalOpen}
-          onOpenChange={setDeleteModalOpen}
-          title="Delete Blog Post"
-          description={`Are you sure you want to delete "${blogToDelete?.title}"? This action cannot be undone.`}
-          confirmText="Delete"
-          cancelText="Cancel"
-          onConfirm={handleDeleteBlog}
-          loading={deleteBlogMutation.isPending}
-          size="sm"
-        >
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
-            <FileText className="h-4 w-4" />
-            <span>{blogToDelete?.title}</span>
-          </div>
-        </AdminModal>
+      {/* Delete Confirmation Modal */}
+      <AdminModal
+        open={deleteModalOpen}
+        onOpenChange={(open) => !open && closeDeleteModal()}
+        title="Delete Blog Post"
+        description={`Are you sure you want to delete "${blogToDelete?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDeleteBlog}
+        loading={deleteBlogMutation.isPending}
+        size="sm"
+      >
+        <div className="flex items-center space-x-2 text-sm text-gray-600">
+          <FileText className="h-4 w-4" />
+          <span>{blogToDelete?.title}</span>
+        </div>
+      </AdminModal>
 
       {/* Pagination Controls */}
       {totalCount > itemsPerPage && (
@@ -506,7 +426,7 @@ export default function BlogsPage() {
               </SelectContent>
             </Select>
           </div>
-          
+
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -518,7 +438,7 @@ export default function BlogsPage() {
               <ChevronLeft className="h-4 w-4" />
               Previous
             </Button>
-            
+
             <div className="flex items-center gap-1">
               {Array.from({ length: Math.min(5, serverTotalPages) }, (_, i) => {
                 let pageNum
@@ -531,7 +451,7 @@ export default function BlogsPage() {
                 } else {
                   pageNum = currentPage - 2 + i
                 }
-                
+
                 return (
                   <Button
                     key={pageNum}
@@ -544,7 +464,7 @@ export default function BlogsPage() {
                   </Button>
                 )
               })}
-              
+
               {serverTotalPages > 5 && (
                 <>
                   <span className="px-2 text-sm text-gray-500">...</span>
@@ -559,7 +479,7 @@ export default function BlogsPage() {
                 </>
               )}
             </div>
-            
+
             <Button
               variant="outline"
               size="sm"
@@ -573,7 +493,14 @@ export default function BlogsPage() {
           </div>
         </div>
       )}
-      </div>
     </div>
+  )
+}
+
+export default function BlogsPage() {
+  return (
+    <BlogProvider>
+      <BlogsPageContent />
+    </BlogProvider>
   )
 }

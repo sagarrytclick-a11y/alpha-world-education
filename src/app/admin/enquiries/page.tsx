@@ -1,7 +1,7 @@
 'use client'
 
-import React, { useState, useMemo } from 'react'
-import { AdminTable, createViewAction, createDeleteAction, createEditAction } from '@/components/admin/AdminTable'
+import React, { useMemo } from 'react'
+import { AdminTable, createViewAction, createDeleteAction } from '@/components/admin/AdminTable'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,21 +16,34 @@ import {
 import { MessageSquare, Search, Eye, Mail, Phone, Calendar, Edit, CheckCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useAdminEnquiriesPaginated, useDeleteEnquiry, useUpdateEnquiryStatus } from '@/hooks/useAdminEnquiries'
 import { Enquiry } from '@/hooks/useAdminEnquiries'
+import { EnquiryProvider, useEnquiryContext } from '@/context/EnquiryContext'
 
-export default function EnquiriesPage() {
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedEnquiry, setSelectedEnquiry] = useState<Enquiry | null>(null)
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [enquiryToDelete, setEnquiryToDelete] = useState<Enquiry | null>(null)
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedStatus, setSelectedStatus] = useState<string>('all')
-  const [selectedPriority, setSelectedPriority] = useState<string>('all')
-  
-  // Pagination states
-  const [currentPage, setCurrentPage] = useState(1)
-  const [itemsPerPage, setItemsPerPage] = useState(10)
-  
-  // API hooks
+function EnquiriesPageContent() {
+  // Use enquiry context for all state management
+  const {
+    isModalOpen,
+    selectedEnquiry,
+    deleteModalOpen,
+    enquiryToDelete,
+    searchTerm,
+    selectedStatus,
+    selectedPriority,
+    currentPage,
+    itemsPerPage,
+    openModal,
+    closeModal,
+    openViewModal,
+    openDeleteModal,
+    closeDeleteModal,
+    setSearchTerm,
+    setSelectedStatus,
+    setSelectedPriority,
+    setCurrentPage,
+    setItemsPerPage,
+    updateSelectedEnquiry,
+  } = useEnquiryContext()
+
+  // TanStack Query hooks
   const { data: paginatedData, isLoading: dataLoading, refetch } = useAdminEnquiriesPaginated(currentPage, itemsPerPage, searchTerm, selectedStatus, selectedPriority)
   const deleteEnquiryMutation = useDeleteEnquiry()
   const updateEnquiryStatusMutation = useUpdateEnquiryStatus()
@@ -167,22 +180,19 @@ export default function EnquiriesPage() {
 
   const actions = [
     createViewAction((enquiry: Enquiry) => {
-      setSelectedEnquiry(enquiry)
-      setIsModalOpen(true)
+      openViewModal(enquiry)
     }),
     createDeleteAction((enquiry: Enquiry) => {
-      setEnquiryToDelete(enquiry)
-      setDeleteModalOpen(true)
+      openDeleteModal(enquiry)
     })
   ]
 
   const handleDeleteEnquiry = async () => {
     if (!enquiryToDelete) return
-    
+
     try {
       await deleteEnquiryMutation.mutateAsync(enquiryToDelete._id)
-      setDeleteModalOpen(false)
-      setEnquiryToDelete(null)
+      closeDeleteModal()
     } catch (error) {
       console.error('Delete error:', error)
     }
@@ -190,19 +200,19 @@ export default function EnquiriesPage() {
 
   const handleStatusChange = async (enquiryId: string, newStatus: string) => {
     try {
-      console.log(`🔄 [FRONTEND] Changing status for enquiry ${enquiryId} to ${newStatus}`);
-      
-      await updateEnquiryStatusMutation.mutateAsync({ 
-        id: enquiryId, 
-        status: newStatus 
+      console.log(`🔄 [FRONTEND] Changing status for enquiry ${enquiryId} to ${newStatus}`)
+
+      await updateEnquiryStatusMutation.mutateAsync({
+        id: enquiryId,
+        status: newStatus
       })
-      
+
       // Update the selected enquiry if it's currently open in modal
       if (selectedEnquiry && selectedEnquiry._id === enquiryId) {
-        setSelectedEnquiry(prev => prev ? { ...prev, status: newStatus as any } : null)
+        updateSelectedEnquiry({ ...selectedEnquiry, status: newStatus as any })
       }
-      
-      console.log(`✅ [FRONTEND] Status changed successfully for ${enquiryId}`);
+
+      console.log(`✅ [FRONTEND] Status changed successfully for ${enquiryId}`)
     } catch (error) {
       console.error('❌ [FRONTEND] Status change error:', error)
     }
@@ -281,7 +291,7 @@ export default function EnquiriesPage() {
       {/* View Enquiry Modal */}
       <AdminModal
         open={isModalOpen}
-        onOpenChange={(open) => !open && setIsModalOpen(false)}
+        onOpenChange={(open) => !open && closeModal()}
         title="Enquiry Details"
         size="lg"
         showFooter={false}
@@ -415,7 +425,7 @@ export default function EnquiriesPage() {
       {/* Delete Confirmation Modal */}
       <AdminModal
         open={deleteModalOpen}
-        onOpenChange={(open) => !open && setDeleteModalOpen(false)}
+        onOpenChange={(open) => !open && closeDeleteModal()}
         title="Delete Enquiry"
         size="sm"
         showFooter={false}
@@ -433,7 +443,7 @@ export default function EnquiriesPage() {
           <div className="flex gap-3 justify-end">
             <Button
               variant="outline"
-              onClick={() => setDeleteModalOpen(false)}
+              onClick={() => closeDeleteModal()}
             >
               Cancel
             </Button>
@@ -535,5 +545,13 @@ export default function EnquiriesPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function EnquiriesPage() {
+  return (
+    <EnquiryProvider>
+      <EnquiriesPageContent />
+    </EnquiryProvider>
   )
 }
