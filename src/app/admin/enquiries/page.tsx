@@ -202,11 +202,6 @@ export default function EnquiriesPage() {
         setSelectedEnquiry(prev => prev ? { ...prev, status: newStatus as any } : null)
       }
       
-      // Force a refresh to ensure table is updated
-      setTimeout(() => {
-        refetch()
-      }, 500)
-      
       console.log(`✅ [FRONTEND] Status changed successfully for ${enquiryId}`);
     } catch (error) {
       console.error('❌ [FRONTEND] Status change error:', error)
