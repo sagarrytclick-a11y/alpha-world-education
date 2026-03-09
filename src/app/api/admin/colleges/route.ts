@@ -4,22 +4,44 @@ import College from "@/models/College";
 import Country from "@/models/Country";
 import { handleApiError, validateRequiredFields, createSuccessResponse, ValidationError } from "@/lib/validation";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Get query parameters for pagination
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+
     console.log('🚀 [API] GET /api/admin/colleges - Request received');
     
     console.log('🔗 [API] Connecting to database...');
     await connectDB();
     console.log('✅ [API] Database connected successfully');
     
-    console.log('📋 [API] Fetching all colleges...');
-    const colleges = await College.find({}).populate('country_ref').sort({ createdAt: -1 });
-    console.log('✅ [API] Colleges fetched:', colleges.length, 'colleges found');
+    // Calculate skip for pagination
+    const skip = (page - 1) * limit;
 
+    // Get total count for pagination
+    const total = await College.countDocuments();
+    
+    // Get paginated colleges
+    const colleges = await College.find({})
+      .populate('country_ref')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+    
+    const totalPages = Math.ceil(total / limit);
+    
+    console.log(`✅ [API] Colleges fetched: ${colleges.length} colleges for page ${page}, total: ${total}`);
+    
     return NextResponse.json({
       success: true,
       message: "Colleges fetched successfully",
       data: colleges,
+      total,
+      page,
+      totalPages,
+      hasMore: page < totalPages
     });
   } catch (error) {
     console.error("💥 [API] Error fetching colleges:", error);
