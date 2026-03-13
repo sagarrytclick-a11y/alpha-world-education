@@ -9,7 +9,7 @@ export default function ContactPage() {
   const { openModal } = useFormModal();
 
   return (
-    <div className="bg-white pt-20 lg:pt-28 pb-20">
+    <div className="viewport-fix bg-white pt-20 lg:pt-28 pb-20">
       {/* Header Section */}
       <section className="relative overflow-hidden py-20 bg-slate-900">
         {/* Decorative Background Elements */}

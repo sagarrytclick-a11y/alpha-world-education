@@ -8,6 +8,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useFormModal } from '@/context/FormModalContext'
 import FAQ from "@/app/Components/FAQ"
+import type { Metadata } from 'next'
 import {
   Calendar,
   Globe,
@@ -28,6 +29,7 @@ import {
   CalendarDays,
   GraduationCap
 } from 'lucide-react'
+import { generateExamMetadata } from '@/lib/metadata'
 import './styles.css'
 
 interface Country {
@@ -78,19 +80,17 @@ interface Exam {
     title: string
     important_dates: {
       event: string
-      date: Date
+      date: string
     }[]
   }
   result_statistics: {
     title: string
     description: string
-    passing_criteria: string
     total_marks: number
     passing_marks: number
+    passing_criteria: string
   }
-  applicable_countries: Country[]
   is_active: boolean
-  display_order: number
   createdAt: string
   updatedAt: string
 }
@@ -182,7 +182,7 @@ const ExamPage = () => {
   }
 
 
-  const formatDate = (date: Date) => {
+  const formatDate = (date: string | Date) => {
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'long',

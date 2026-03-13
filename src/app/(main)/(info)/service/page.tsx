@@ -1,4 +1,5 @@
-"use client";
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, useInView, useAnimation } from 'framer-motion';
 import {
@@ -13,6 +14,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import FAQ from "@/app/Components/FAQ";
+import SchemaMarkup from "@/components/SchemaMarkup";
 
 // Animated Counter Component
 const AnimatedCounter = ({ end, duration = 2000, suffix = '', prefix = '' }: {
@@ -112,377 +114,139 @@ const AnimatedCard = ({ children, delay = 0 }: { children: React.ReactNode; dela
   );
 };
 
-const ServicesPage = () => {
+// Client component wrapper
+function ServicesPageContent() {
   return (
-    <div className="bg-white min-h-screen font-sans">
+    <div className="min-h-screen bg-white">
+      {/* Hero Section */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 to-white py-20 lg:py-32">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-100 to-transparent rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-green-100 to-transparent rounded-full blur-3xl" />
+        </div>
 
-      <div className="relative z-10">
-        {/* Header Section */}
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
-          <div className="text-center">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
-              className="inline-flex items-center gap-3 bg-gradient-to-r from-green-50 to-green-50 border border-green-200 text-green-700 px-4 py-2 rounded-full text-sm font-semibold mb-8 shadow-sm"
-            >
-              <motion.div
-                animate={{
-                  rotate: [0, 14, -8, 14, -4, 10, 0, 0],
-                  scale: [1, 1.1, 0.9, 1.1, 0.95, 1.05, 1, 1]
-                }}
-                transition={{
-                  duration: 2.5,
-                  repeat: Infinity,
-                  repeatDelay: 3,
-                  ease: "easeInOut"
-                }}
-                className="text-lg"
-              >
-                🎯
-              </motion.div>
-              <span className="tracking-wide">COMPREHENSIVE GUIDANCE</span>
-            </motion.div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            {/* Breadcrumb */}
+            <nav className="flex items-center justify-center text-sm text-slate-500 mb-8">
+              <Link href="/" className="hover:text-slate-700 transition-colors flex items-center gap-2">
+                <Home className="w-4 h-4" />
+                Home
+              </Link>
+              <ArrowRight className="w-4 h-4 mx-2" />
+              <span className="text-slate-900 font-medium">Services</span>
+            </nav>
 
-            <motion.h1
-              initial={{ opacity: 0, y: 40 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black text-slate-900 mb-6 leading-tight"
-            >
-              Your Complete Study
-              <motion.span
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: 0.6 }}
-                className="block text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-green-600"
-              >
-                Abroad Solution
-              </motion.span>
-            </motion.h1>
-
-            <motion.p
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="max-w-3xl mx-auto text-xl text-slate-600 leading-relaxed mb-12"
-            >
-              From university selection to visa approval, accommodation to career guidance -
-              we handle every aspect of your international education journey with expertise and care.
-            </motion.p>
-
-            {/* Feature highlights */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.8 }}
-              className="flex flex-wrap justify-center items-center gap-6 text-sm font-medium text-slate-500"
-            >
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                99% Success Rate
+            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-slate-900 mb-8 leading-tight">
+              Comprehensive
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
+                {" "}Services
               </span>
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                500+ Universities
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-                25+ Countries
-              </span>
-              <span className="flex items-center gap-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                10k+ Students
-              </span>
-            </motion.div>
-          </div>
-        </section>
+            </h1>
 
-        {/* Services Section */}
-        <section className="pb-20 lg:pb-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-4">
-                Our Comprehensive Services
-              </h2>
-              <p className="text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                Every service is designed to address specific challenges in your study abroad journey,
-                ensuring you have expert support at every step.
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed mb-12">
+              From test preparation to visa assistance, we provide end-to-end support for your international education journey. Our expert team ensures you make informed decisions every step of the way.
+            </p>
+
+            {/* Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 max-w-4xl mx-auto">
+              {[
+                { number: "10,000+", label: "Students Helped" },
+                { number: "500+", label: "University Partners" },
+                { number: "25+", label: "Countries" },
+                { number: "98%", label: "Success Rate" }
+              ].map((stat, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.2 + index * 0.1 }}
+                  className="text-center"
+                >
+                  <div className="text-3xl lg:text-4xl font-black text-slate-900 mb-2">
+                    {stat.number}
+                  </div>
+                  <div className="text-sm text-slate-500 uppercase tracking-wider font-medium">
+                    {stat.label}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Services Grid */}
+      <section className="py-20 lg:py-32 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-4xl lg:text-5xl font-black text-slate-900 mb-6">
+              Our Core
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-green-600">
+                {" "}Services
+              </span>
+            </h2>
+            <p className="text-xl text-slate-600 max-w-3xl mx-auto leading-relaxed">
+              Comprehensive support services designed to make your international education journey smooth and successful.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+            {/* Simple service cards */}
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-green-300 hover:shadow-2xl transition-all duration-500">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-6 flex items-center justify-center">
+                <GraduationCap size={28} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">University Admissions</h3>
+              <p className="text-slate-600 leading-relaxed mb-6">
+                Strategic guidance for top universities worldwide. We match your profile with perfect institutions.
               </p>
-            </motion.div>
-
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {/* University Admissions */}
-          <AnimatedCard delay={0.1}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-green-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <GraduationCap size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-green-600 transition-colors">
-                  University Admissions
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Strategic guidance for top universities worldwide. We match your profile with perfect institutions.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-green-600 font-semibold group-hover:text-green-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Learn More</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
+              <div className="flex items-center text-green-600 font-semibold">
+                <span>Learn More</span>
+                <ArrowUpRight size={18} className="ml-2" />
               </div>
-
-              {/* Subtle background pattern */}
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-
-          {/* Visa Assistance */}
-          <AnimatedCard delay={0.2}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-orange-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <FileText size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-blue-600 transition-colors">
-                  Visa Assistance
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Expert visa application support with 99% success rate across all major destinations.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-blue-600 font-semibold group-hover:text-blue-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Get Started</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-
-          {/* Accommodation */}
-          <AnimatedCard delay={0.3}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-orange-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <Home size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-green-600 transition-colors">
-                  Accommodation
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Pre-arranged housing solutions in verified locations near your university campus.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-green-600 font-semibold group-hover:text-green-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Find Housing</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-
-          {/* Scholarships */}
-          <AnimatedCard delay={0.4}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-orange-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-violet-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <DollarSign size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-purple-600 transition-colors">
-                  Scholarships
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Access to exclusive scholarships and financial aid opportunities worth millions.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-purple-600 font-semibold group-hover:text-purple-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Explore Funds</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-purple-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-
-          {/* Test Prep */}
-          <AnimatedCard delay={0.5}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-green-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-pink-500 to-rose-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <BookOpen size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-pink-600 transition-colors">
-                  Test Prep
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Comprehensive preparation for IELTS, TOEFL, GRE, and other entrance exams.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-pink-600 font-semibold group-hover:text-pink-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Start Learning</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-
-          {/* Career Counseling */}
-          <AnimatedCard delay={0.6}>
-            <motion.div
-              className="group relative bg-white border border-slate-200 rounded-2xl p-8 hover:border-green-300 hover:shadow-2xl transition-all duration-500 overflow-hidden"
-              whileHover={{ y: -8 }}
-            >
-              <div className="relative z-10">
-                <motion.div
-                  className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-cyan-500 to-teal-600 rounded-2xl mb-6 shadow-lg"
-                  whileHover={{ scale: 1.1, rotate: -5 }}
-                  transition={{ type: "spring", stiffness: 400 }}
-                >
-                  <TrendingUp size={28} className="text-white" />
-                </motion.div>
-
-                <h3 className="text-2xl font-bold text-slate-900 mb-3 group-hover:text-cyan-600 transition-colors">
-                  Career Counseling
-                </h3>
-
-                <p className="text-slate-600 leading-relaxed mb-6">
-                  Personalized career guidance and roadmap creation for your future success.
-                </p>
-
-                <motion.div
-                  className="flex items-center text-cyan-600 font-semibold group-hover:text-cyan-700"
-                  whileHover={{ x: 4 }}
-                >
-                  <span>Get Advice</span>
-                  <ArrowUpRight size={18} className="ml-2" />
-                </motion.div>
-              </div>
-
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-50 to-transparent rounded-full -translate-y-8 translate-x-8 opacity-50 group-hover:opacity-70 transition-opacity" />
-            </motion.div>
-          </AnimatedCard>
-          </div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
-        <section className="bg-slate-50 py-20 lg:py-28">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              viewport={{ once: true }}
-              className="text-center mb-16"
-            >
-              <h2 className="text-3xl sm:text-4xl font-black text-slate-900 mb-6">
-                Proven Results That Speak
-              </h2>
-              <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-                Our track record speaks for itself. Join thousands of successful students who have transformed their futures.
-              </p>
-            </motion.div>
-
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-16">
-              <AnimatedCounter end="10000" suffix="Students Placed" />
-              <AnimatedCounter end="500" suffix="University Partners" />
-              <AnimatedCounter end="25" suffix="Countries Served" />
-              <AnimatedCounter prefix="$" end="50000" suffix="Scholarships Secured" />
             </div>
 
-            {/* Call to Action */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: true }}
-              className="text-center"
-            >
-              <Link href="/contact" className="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-primary/90 transition-colors">
-                Begin Your Journey
-                <ArrowRight className="inline-block ml-3 w-5 h-5" />
-              </Link>
-              <p className="text-slate-500 text-sm mt-4">Free consultation • No commitment required</p>
-            </motion.div>
+            <div className="bg-white border border-slate-200 rounded-2xl p-8 hover:border-blue-300 hover:shadow-2xl transition-all duration-500">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 flex items-center justify-center">
+                <FileText size={28} className="text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-slate-900 mb-3">Visa Assistance</h3>
+              <p className="text-slate-600 leading-relaxed mb-6">
+                Expert visa application support with 99% success rate across all major destinations.
+              </p>
+              <div className="flex items-center text-blue-600 font-semibold">
+                <span>Get Started</span>
+                <ArrowUpRight size={18} className="ml-2" />
+              </div>
+            </div>
           </div>
-        </section>
-      </div>
+        </div>
+      </section>
+      
+      {/* FAQ */}
       <FAQ />
     </div>
   );
-};
+}
 
-export default ServicesPage;
+export default function ServicesPage() {
+  return (
+    <>
+      <SchemaMarkup pageType="service" />
+      <ServicesPageContent />
+    </>
+  );
+}

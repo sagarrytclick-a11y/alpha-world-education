@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import CollegeSlider from '@/components/CollegeSlider'
 import { useFormModal } from '@/context/FormModalContext'
 import FAQ from "@/app/Components/FAQ"
+import type { Metadata } from 'next'
 import { 
   MapPin, 
   Globe, 
@@ -23,6 +24,7 @@ import {
   ArrowLeft,
   FileText
 } from 'lucide-react'
+import { generateCountryMetadata } from '@/lib/metadata'
 
 interface Country {
   _id: string

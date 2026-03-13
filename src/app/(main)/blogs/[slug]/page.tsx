@@ -1,11 +1,12 @@
 'use client'
 
-import React, { useState } from 'react'
+import React from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import type { Metadata } from 'next'
 import { 
   Calendar, 
   User, 
@@ -20,6 +21,7 @@ import {
   RefreshCw
 } from 'lucide-react'
 import { useBlog } from '@/hooks/useBlogs'
+import { generateBlogMetadata } from '@/lib/metadata'
 
 interface Blog {
   _id: string
