@@ -2,7 +2,6 @@
 
 import React, { useState, useMemo } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -10,6 +9,127 @@ import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Search, Calendar, Tag, FileText, Clock, Image as ImageIcon, User, Eye, MessageCircle, ArrowRight, X, Filter, AlertCircle, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useBlogs } from '@/hooks/useBlogs'
+
+// Structured Data Component
+const BlogStructuredData = ({ blogs, currentPage, totalPages, searchTerm, selectedCategory, paginatedBlogs, filteredBlogs, itemsPerPage }: { 
+  blogs: Blog[], 
+  currentPage: number, 
+  totalPages: number,
+  searchTerm: string,
+  selectedCategory: string,
+  paginatedBlogs: Blog[],
+  filteredBlogs: Blog[],
+  itemsPerPage: number
+}) => {
+  const blogStructuredData = paginatedBlogs.map((blog, index) => ({
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": blog.title,
+    "description": blog.content.substring(0, 160) + (blog.content.length > 160 ? "..." : ""),
+    "image": blog.image || `https://picsum.photos/seed/${blog.slug}/600/400`,
+    "author": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "url": "https://alphaworldeducation.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://alphaworldeducation.com/images/logo.png"
+      }
+    },
+    "datePublished": blog.published_at || blog.createdAt,
+    "dateModified": blog.updatedAt,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://alphaworldeducation.com/blogs/${blog.slug}`
+    },
+    "url": `https://alphaworldeducation.com/blogs/${blog.slug}`,
+    "keywords": blog.tags.join(", "),
+    "category": blog.category,
+    "articleSection": "Educational Resources",
+    "inLanguage": "en-US",
+    "isPartOf": {
+      "@type": "Blog",
+      "name": "Alpha World Education Blog",
+      "description": "Expert insights, study tips, and success stories from our education consultants.",
+      "url": "https://alphaworldeducation.com/blogs"
+    }
+  }))
+
+  const collectionStructuredData = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Latest Articles - Alpha World Education Blog",
+    "description": searchTerm || selectedCategory !== 'all' 
+      ? `Browse ${selectedCategory !== 'all' ? selectedCategory + ' articles' : 'search results for: ' + searchTerm} from Alpha World Education. Expert insights on study abroad, exam preparation, and international education.`
+      : "Explore the latest articles from Alpha World Education. Expert insights, study tips, and success stories from our education consultants.",
+    "url": `https://alphaworldeducation.com/blogs${searchTerm ? '?search=' + searchTerm : ''}${selectedCategory !== 'all' ? '?category=' + selectedCategory : ''}`,
+    "mainEntity": {
+      "@type": "ItemList",
+      "numberOfItems": filteredBlogs.length,
+      "itemListElement": blogStructuredData.map((item, index) => ({
+        "@type": "ListItem",
+        "position": index + 1 + ((currentPage - 1) * itemsPerPage),
+        "item": item
+      }))
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://alphaworldeducation.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://alphaworldeducation.com/blogs"
+        }
+      ]
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "url": "https://alphaworldeducation.com",
+      "sameAs": [
+        "https://www.facebook.com/AlphaWorldEducation",
+        "https://www.twitter.com/AlphaWorldEdu",
+        "https://www.linkedin.com/company/alpha-world-education"
+      ]
+    },
+    "about": {
+      "@type": "Thing",
+      "name": "International Education",
+      "description": "Study abroad programs, university admissions, and educational consulting services"
+    }
+  }
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(collectionStructuredData, null, 2)
+        }}
+      />
+      {blogStructuredData.map((blogData, index) => (
+        <script
+          key={`blog-structured-data-${index}`}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(blogData, null, 2)
+          }}
+        />
+      ))}
+    </>
+  )
+}
 
 interface Blog {
   _id: string
@@ -33,17 +153,17 @@ interface Blog {
 export default function BlogsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  
+
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage, setItemsPerPage] = useState(9)
 
   // Use TanStack Query for blogs data
-  const { 
-    data: blogs = [], 
-    isLoading, 
-    error, 
-    refetch 
+  const {
+    data: blogs = [],
+    isLoading,
+    error,
+    refetch
   } = useBlogs()
 
   // Filter blogs based on search and category
@@ -56,7 +176,7 @@ export default function BlogsPage() {
 
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase()
-      filtered = filtered.filter(blog => 
+      filtered = filtered.filter(blog =>
         blog.title.toLowerCase().includes(searchLower) ||
         blog.content.toLowerCase().includes(searchLower) ||
         blog.tags.some(tag => tag.toLowerCase().includes(searchLower))
@@ -74,8 +194,6 @@ export default function BlogsPage() {
   }, [filteredBlogs, currentPage, itemsPerPage])
 
   const totalPages = Math.ceil(filteredBlogs.length / itemsPerPage)
-  const startIndex = (currentPage - 1) * itemsPerPage + 1
-  const endIndex = Math.min(currentPage * itemsPerPage, filteredBlogs.length)
 
   // Reset to page 1 when filters change
   React.useEffect(() => {
@@ -83,8 +201,8 @@ export default function BlogsPage() {
   }, [searchTerm, selectedCategory])
 
   // Extract unique categories
-  const categories = useMemo(() => 
-    [...new Set(blogs.map(blog => blog.category))], 
+  const categories = useMemo(() =>
+    [...new Set(blogs.map(blog => blog.category))],
     [blogs]
   )
 
@@ -110,7 +228,7 @@ export default function BlogsPage() {
           <p className="text-slate-500 mb-6">
             {error instanceof Error ? error.message : 'An unexpected error occurred'}
           </p>
-          <Button 
+          <Button
             onClick={() => refetch()}
             className="bg-green-600 hover:bg-green-700 text-white font-medium"
           >
@@ -123,7 +241,18 @@ export default function BlogsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC]">
+    <>
+      <BlogStructuredData 
+        blogs={blogs}
+        currentPage={currentPage}
+        totalPages={totalPages}
+        searchTerm={searchTerm}
+        selectedCategory={selectedCategory}
+        paginatedBlogs={paginatedBlogs}
+        filteredBlogs={filteredBlogs}
+        itemsPerPage={itemsPerPage}
+      />
+      <div className="min-h-screen bg-[#F8FAFC]">
       {/* Premium Header - Same Style as Other Pages */}
       <div className="bg-white border-b border-slate-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-green-50 rounded-full -mr-16 -mt-16 blur-3xl" />
@@ -136,8 +265,10 @@ export default function BlogsPage() {
               <h1 className="text-4xl md:text-5xl font-black text-slate-900 tracking-tighter">
                 LATEST <span className="text-green-600">ARTICLES</span>
               </h1>
-              <p className="text-slate-500 mt-2 font-medium max-w-md">
+              <p className="text-slate-500 mt-2 font-medium max-w-md leading-relaxed">
                 Expert insights, study tips, and success stories from our education consultants.
+                Stay updated with the latest trends in international education, exam preparation strategies,
+                visa guidance, and university admission processes to make your study abroad journey successful.
               </p>
             </div>
             <div className="bg-white shadow-sm border border-slate-100 rounded-2xl p-4 flex items-center gap-4">
@@ -166,7 +297,7 @@ export default function BlogsPage() {
                 className="pl-12 bg-slate-50 border-none h-12 rounded-xl font-medium focus-visible:ring-2 focus-visible:ring-green-500"
               />
             </div>
-            
+
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="h-12 bg-slate-50 border-none rounded-xl font-medium">
                 <SelectValue placeholder="Category" />
@@ -179,8 +310,8 @@ export default function BlogsPage() {
               </SelectContent>
             </Select>
 
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
               className="h-12 text-slate-500 hover:text-red-500 hover:bg-red-50 rounded-xl font-bold flex gap-2"
             >
@@ -202,8 +333,27 @@ export default function BlogsPage() {
             <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <ImageIcon size={32} className="text-slate-300" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900">No articles found</h3>
-            <p className="text-slate-500 font-medium">Try different keywords or categories.</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-3">No articles found</h3>
+            <p className="text-slate-500 font-medium mb-4 max-w-md mx-auto">
+              We couldn't find any articles matching your search criteria. Try adjusting your keywords,
+              exploring different categories, or browse our comprehensive collection of educational resources
+              covering study abroad tips, exam preparation, visa guidance, and university admissions.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                onClick={() => { setSearchTerm(''); setSelectedCategory('all'); }}
+                className="bg-green-600 hover:bg-green-700 text-white font-medium"
+              >
+                Browse All Articles
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/contact'}
+                className="border-green-600 text-green-600 hover:bg-green-50 font-medium"
+              >
+                Get Expert Help
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -220,7 +370,7 @@ export default function BlogsPage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent" />
-                  
+
                   <div className="absolute top-4 left-4">
                     <Badge className="bg-white/90 backdrop-blur-md text-green-700 hover:bg-white border-none px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter shadow-sm">
                       {blog.category}
@@ -233,7 +383,7 @@ export default function BlogsPage() {
                     </h3>
                   </div>
                 </div>
-                
+
                 <CardContent className="p-6 flex flex-col flex-grow">
                   {/* Meta Info */}
                   <div className="flex items-center justify-between text-sm text-slate-500 mb-4">
@@ -252,7 +402,7 @@ export default function BlogsPage() {
                   <p className="text-slate-500 text-sm leading-relaxed line-clamp-3 mb-6 font-medium">
                     {blog.content}
                   </p>
-                  
+
                   {/* Tags */}
                   {blog.tags && blog.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
@@ -264,7 +414,7 @@ export default function BlogsPage() {
                     </div>
                   )}
 
-                 
+
                   {/* Related Exams */}
                   {blog.related_exams && blog.related_exams.length > 0 && (
                     <div className="mb-6">
@@ -297,7 +447,7 @@ export default function BlogsPage() {
             ))}
           </div>
         )}
-        
+
         {/* Pagination Controls */}
         {filteredBlogs.length > itemsPerPage && (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-12">
@@ -318,7 +468,7 @@ export default function BlogsPage() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -330,7 +480,7 @@ export default function BlogsPage() {
                 <ChevronLeft className="h-4 w-4" />
                 Previous
               </Button>
-              
+
               <div className="flex items-center gap-1">
                 {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                   let pageNum
@@ -343,7 +493,7 @@ export default function BlogsPage() {
                   } else {
                     pageNum = currentPage - 2 + i
                   }
-                  
+
                   return (
                     <Button
                       key={pageNum}
@@ -356,7 +506,7 @@ export default function BlogsPage() {
                     </Button>
                   )
                 })}
-                
+
                 {totalPages > 5 && (
                   <>
                     <span className="px-2 text-sm text-gray-500">...</span>
@@ -371,7 +521,7 @@ export default function BlogsPage() {
                   </>
                 )}
               </div>
-              
+
               <Button
                 variant="outline"
                 size="sm"
@@ -385,7 +535,132 @@ export default function BlogsPage() {
             </div>
           </div>
         )}
+
+        {/* Educational Resources Section */}
+        <div className="bg-white border-t border-slate-100">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                Educational <span className="text-green-600">Resources</span> & Guides
+              </h2>
+              <p className="text-slate-600 max-w-3xl mx-auto leading-relaxed">
+                Explore our comprehensive collection of educational resources designed to help you navigate your study abroad journey.
+                From expert advice on university applications to visa requirements and scholarship opportunities,
+                our articles provide actionable insights for international students.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+              <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100">
+                <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center mb-4">
+                  <FileText className="w-6 h-6 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Study Abroad Tips</h3>
+                <p className="text-slate-600 leading-relaxed mb-4">
+                  Discover essential tips for choosing the right country, university, and course.
+                  Learn about cultural adaptation, accommodation options, and part-time work opportunities
+                  for international students. Our expert consultants share proven strategies for academic success
+                  and personal growth in foreign educational environments.
+                </p>
+                <ul className="space-y-2 text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">•</span>
+                    <span>Country selection guidance and comparison</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">•</span>
+                    <span>Application timeline and requirements</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-green-600 mt-1">•</span>
+                    <span>Cultural adaptation strategies</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-blue-50 rounded-2xl p-6 border border-blue-100">
+                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mb-4">
+                  <Calendar className="w-6 h-6 text-blue-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Exam Preparation</h3>
+                <p className="text-slate-600 leading-relaxed mb-4">
+                  Master standardized tests required for international admissions. Get comprehensive guides
+                  for IELTS, TOEFL, SAT, GRE, GMAT, and other essential exams.
+                  Our articles include study schedules, practice strategies, and test-taking techniques
+                  from successful candidates.
+                </p>
+                <ul className="space-y-2 text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Comprehensive exam guides and syllabus</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Practice tests and time management</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-600 mt-1">•</span>
+                    <span>Score improvement strategies</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="bg-purple-50 rounded-2xl p-6 border border-purple-100">
+                <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center mb-4">
+                  <User className="w-6 h-6 text-purple-600" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-3">Success Stories</h3>
+                <p className="text-slate-600 leading-relaxed mb-4">
+                  Get inspired by real experiences from students who successfully studied abroad.
+                  Learn from their challenges, achievements, and valuable lessons. These stories provide
+                  practical insights and motivation for your own educational journey abroad.
+                </p>
+                <ul className="space-y-2 text-slate-600">
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-600 mt-1">•</span>
+                    <span>Real student experiences and testimonials</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-600 mt-1">•</span>
+                    <span>Career outcomes and opportunities</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-purple-600 mt-1">•</span>
+                    <span>Lessons learned and advice</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            <div className="bg-linear-to-r from-green-50 to-blue-50 rounded-3xl p-8 text-center border border-green-100">
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">
+                Need Personalized Guidance?
+              </h3>
+              <p className="text-slate-600 max-w-2xl mx-auto mb-6 leading-relaxed">
+                Our expert education consultants are here to help you navigate every step of your study abroad journey.
+                From university selection to visa applications and pre-departure preparation, we provide personalized
+                support tailored to your academic goals and career aspirations.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={() => window.location.href = '/contact'}
+                  className="bg-green-600 hover:bg-green-700 text-white font-bold px-8 py-4 rounded-2xl"
+                >
+                  Schedule Free Consultation
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => window.location.href = '/about'}
+                  className="border-green-600 text-green-600 hover:bg-green-50 font-bold px-8 py-4 rounded-2xl"
+                >
+                  Learn About Our Services
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
+    </>
   )
 }

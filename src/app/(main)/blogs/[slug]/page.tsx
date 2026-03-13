@@ -23,6 +23,110 @@ import {
 import { useBlog } from '@/hooks/useBlogs'
 import { generateBlogMetadata } from '@/lib/metadata'
 
+// Structured Data Component for Blog Detail
+const BlogDetailStructuredData = ({ blog }: { blog: Blog | null }) => {
+  if (!blog) return null
+
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "headline": blog.title,
+    "description": blog.content.substring(0, 160) + (blog.content.length > 160 ? "..." : ""),
+    "image": blog.image || `https://picsum.photos/seed/${blog.slug}/600/400`,
+    "author": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "url": "https://alphaworldeducation.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://alphaworldeducation.com/images/logo.png"
+      }
+    },
+    "datePublished": blog.published_at || blog.createdAt,
+    "dateModified": blog.updatedAt,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://alphaworldeducation.com/blogs/${blog.slug}`
+    },
+    "url": `https://alphaworldeducation.com/blogs/${blog.slug}`,
+    "keywords": blog.tags.join(", "),
+    "category": blog.category,
+    "articleSection": "Educational Resources",
+    "inLanguage": "en-US",
+    "wordCount": blog.content.split(" ").length,
+    "timeRequired": blog.read_time ? `PT${blog.read_time}M` : undefined,
+    "interactionStatistic": [
+      {
+        "@type": "InteractionCounter",
+        "interactionType": "https://schema.org/ViewAction",
+        "userInteractionCount": blog.views || 0
+      },
+      {
+        "@type": "InteractionCounter", 
+        "interactionType": "https://schema.org/CommentAction",
+        "userInteractionCount": blog.comments || 0
+      }
+    ],
+    "about": {
+      "@type": "Thing",
+      "name": blog.category,
+      "description": `Educational content about ${blog.category} for international students`
+    },
+    "isPartOf": {
+      "@type": "Blog",
+      "name": "Alpha World Education Blog",
+      "description": "Expert insights, study tips, and success stories from our education consultants.",
+      "url": "https://alphaworldeducation.com/blogs"
+    },
+    "breadcrumb": {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://alphaworldeducation.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://alphaworldeducation.com/blogs"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": blog.title,
+          "item": `https://alphaworldeducation.com/blogs/${blog.slug}`
+        }
+      ]
+    },
+    "provider": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "url": "https://alphaworldeducation.com",
+      "sameAs": [
+        "https://www.facebook.com/AlphaWorldEducation",
+        "https://www.twitter.com/AlphaWorldEdu",
+        "https://www.linkedin.com/company/alpha-world-education"
+      ]
+    }
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData, null, 2)
+      }}
+    />
+  )
+}
+
 interface Blog {
   _id: string
   title: string
@@ -97,7 +201,9 @@ const BlogDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
+    <>
+      <BlogDetailStructuredData blog={blog} />
+      <div className="min-h-screen bg-gradient-to-b from-white to-slate-50">
       {/* Header */}
       <div className="bg-white border-b border-slate-100 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -210,6 +316,7 @@ const BlogDetailPage = () => {
         </div>
       </div>
     </div>
+    </>
   )
 }
 
