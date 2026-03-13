@@ -1,5 +1,3 @@
-"use client";
-
 import AlphaWorldAdvantage from "@/app/Components/AdvantageCard";
 import CtaSection from "@/app/Components/CtaSection";
 import DestinationHighlights from "@/app/Components/DestinationHighlights";
@@ -14,8 +12,16 @@ import ProcessJourney from "@/app/Components/ProcessJourney";
 import Services from "@/app/Components/Services";
 import StudentTestimonials from "@/app/Components/StudentTestimonials";
 import StudyPrograms from "@/app/Components/StudyPrograms";
+import type { Metadata } from 'next';
+import { staticPageMetadata, defaultViewport } from '@/lib/metadata';
+import SchemaMarkup from "@/components/SchemaMarkup";
 
-const page = () => {
+export const metadata: Metadata = staticPageMetadata.home;
+
+export { defaultViewport as viewport };
+
+// Client component wrapper
+function HomePageContent() {
   return (
     <div className="w-full bg-white text-black overflow-x-hidden">
       <Hero />
@@ -33,6 +39,13 @@ const page = () => {
       <CtaSection />
     </div>
   );
-};
+}
 
-export default page;
+export default function HomePage() {
+  return (
+    <>
+      <SchemaMarkup pageType="home" />
+      <HomePageContent />
+    </>
+  );
+}

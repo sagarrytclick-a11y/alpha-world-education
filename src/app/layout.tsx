@@ -2,9 +2,11 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Poppins } from "next/font/google";
 import "./globals.css";
 import { SITE_IDENTITY } from "@/site-identity";
+import { defaultViewport } from "@/lib/metadata";
 import { FormModalProvider } from "@/context/FormModalContext";
 import { FormModal } from "@/components/FormModal";
 import { QueryProvider } from "@/providers/QueryProvider";
+import SchemaMarkup from "@/components/SchemaMarkup";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,23 +25,49 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: SITE_IDENTITY.meta.title,
+  metadataBase: new URL('https://alphaworldeducation.com'),
+  title: {
+    default: SITE_IDENTITY.meta.title,
+    template: '%s | Alpha World Education'
+  },
   description: SITE_IDENTITY.meta.description,
-   keywords: SITE_IDENTITY.meta.keywords,
+  keywords: SITE_IDENTITY.meta.keywords,
   authors: [{ name: SITE_IDENTITY.meta.author }],
   creator: SITE_IDENTITY.meta.author,
   publisher: SITE_IDENTITY.meta.author,
-  viewport: 'width=device-width, initial-scale=1',
+    robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
   openGraph: {
     title: SITE_IDENTITY.meta.title,
     description: SITE_IDENTITY.meta.description,
     type: "website",
-    images: [SITE_IDENTITY.meta.ogImage || SITE_IDENTITY.assets.logo.main],
+    locale: "en_US",
+    siteName: "Alpha World Education",
+    url: "https://alphaworldeducation.com",
+    images: [
+      {
+        url: SITE_IDENTITY.meta.ogImage || SITE_IDENTITY.assets.logo.main,
+        width: 1200,
+        height: 630,
+        alt: SITE_IDENTITY.meta.title,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_IDENTITY.meta.title,
     description: SITE_IDENTITY.meta.description,
+    site: "@AlphaWorldEdu",
+    creator: "@AlphaWorldEdu",
     images: [SITE_IDENTITY.meta.ogImage || SITE_IDENTITY.assets.logo.main],
   },
   icons: {
@@ -48,6 +76,8 @@ export const metadata: Metadata = {
   },
   manifest: "/manifest.json",
 };
+
+export { defaultViewport as viewport };
 
 export default function RootLayout({
   children,
@@ -61,6 +91,7 @@ export default function RootLayout({
           <FormModalProvider>
             {children}
             <FormModal />
+            <SchemaMarkup pageType="home" />
           </FormModalProvider>
         </QueryProvider>
       </body>

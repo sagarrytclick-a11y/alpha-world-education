@@ -9,12 +9,12 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   return (
-    <>
+    <div className="viewport-fix">
       <Navbar />
       <div className="pt-20 lg:pt-28">
         {children}
       </div>
       <Footer />
-    </>
+    </div>
   );
 }
