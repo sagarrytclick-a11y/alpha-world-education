@@ -30,6 +30,9 @@ export const metadata: Metadata = {
     default: SITE_IDENTITY.meta.title,
     template: '%s | Alpha World Education'
   },
+  verification : {
+    google: 'B2VfWkvZtALXsLyFR9qD5EsilILhugFIDTcvsksS3EA',
+  } , 
   description: SITE_IDENTITY.meta.description,
   keywords: SITE_IDENTITY.meta.keywords,
   authors: [{ name: SITE_IDENTITY.meta.author }],

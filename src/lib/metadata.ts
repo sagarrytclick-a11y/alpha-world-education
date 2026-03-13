@@ -192,7 +192,7 @@ export function generateCollegeMetadata(college: {
 export const staticPageMetadata = {
   home: generatePageMetadata({
     title: 'Study Abroad & International Education',
-    description: 'Alpha World Education is your trusted partner for international college admissions. Get expert guidance for studying abroad in top universities worldwide.',
+    description: 'Alpha World Education is your trusted partner for international college admissions and study abroad programs. Get expert guidance for studying abroad in top universities worldwide with personalized counseling and comprehensive support services.',
     slug: '',
     keywords: [
       'study abroad',

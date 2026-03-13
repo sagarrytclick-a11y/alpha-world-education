@@ -20,6 +20,86 @@ export const metadata: Metadata = staticPageMetadata.home;
 
 export { defaultViewport as viewport };
 
+// Structured Data Component for Home Page
+const HomeStructuredData = () => {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Alpha World Education",
+    "alternateName": "Alpha World Education - Study Abroad Consultants",
+    "url": "https://alphaworldeducation.com",
+    "description": "Alpha World Education is your trusted partner for international college admissions and study abroad programs. Get expert guidance for studying abroad in top universities worldwide with personalized counseling and comprehensive support services.",
+    "inLanguage": "en-US",
+    "isAccessibleForFree": true,
+    "isFamilyFriendly": true,
+    "publisher": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "url": "https://alphaworldeducation.com",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://alphaworldeducation.com/images/logo.png",
+        "width": 512,
+        "height": 512
+      },
+      "sameAs": [
+        "https://www.facebook.com/AlphaWorldEducation",
+        "https://www.twitter.com/AlphaWorldEdu",
+        "https://www.linkedin.com/company/alpha-world-education"
+      ]
+    },
+    "potentialAction": [
+      {
+        "@type": "SearchAction",
+        "target": "https://alphaworldeducation.com/blogs?q={search_term}",
+        "query-input": "required name=search_term"
+      },
+      {
+        "@type": "ReadAction",
+        "target": "https://alphaworldeducation.com/blogs"
+      },
+      {
+        "@type": "CommunicateAction",
+        "target": "https://alphaworldeducation.com/contact"
+      }
+    ],
+    "mainEntity": {
+      "@type": "Organization",
+      "name": "Alpha World Education",
+      "description": "Leading international education consultancy providing study abroad programs, university admissions, and visa guidance services",
+      "url": "https://alphaworldeducation.com",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "India"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "telephone": "+91-XXXXXXXXXX",
+        "contactType": "customer service"
+      },
+      "sameAs": [
+        "https://www.facebook.com/AlphaWorldEducation",
+        "https://www.twitter.com/AlphaWorldEdu",
+        "https://www.linkedin.com/company/alpha-world-education"
+      ]
+    },
+    "about": {
+      "@type": "Thing",
+      "name": "International Education Services",
+      "description": "Study abroad consultancy, university admissions, visa assistance, and educational guidance for international students"
+    }
+  }
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{
+        __html: JSON.stringify(structuredData, null, 2)
+      }}
+    />
+  )
+}
+
 // Client component wrapper
 function HomePageContent() {
   return (
@@ -45,6 +125,7 @@ export default function HomePage() {
   return (
     <>
       <SchemaMarkup pageType="home" />
+      <HomeStructuredData />
       <HomePageContent />
     </>
   );
