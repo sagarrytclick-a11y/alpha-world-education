@@ -168,7 +168,7 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
     };
 
     window.addEventListener('scroll', handleScroll);
-    handleScroll(); // Check initial position
+    handleScroll(); 
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);

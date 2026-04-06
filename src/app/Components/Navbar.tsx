@@ -10,44 +10,52 @@ import { useFormModal } from "@/context/FormModalContext";
 import { useDropdownData } from "@/hooks/useDropdownData";
 import { useCountryColleges } from "@/hooks/useCountryColleges";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
-  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [expandedMobileItem, setExpandedMobileItem] = useState<string | null>(null);
+  const [showMobileSearch, setShowMobileSearch] = useState(false);
+  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
+  const [hoveredCountry, setHoveredCountry] = useState<string | null>(null);
   const [expandedMobileCountry, setExpandedMobileCountry] = useState<string | null>(null);
   const [showMobileColleges, setShowMobileColleges] = useState<string | null>(null);
   const [collegeSearch, setCollegeSearch] = useState('');
   const [countryCollegeSearch, setCountryCollegeSearch] = useState('');
-  const [mobileSearchQuery, setMobileSearchQuery] = useState('');
   const [showMobileSearchResults, setShowMobileSearchResults] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const { emails, phones, address } = useContactInfo();
   const pathname = usePathname();
   const { openModal } = useFormModal();
   const { colleges, exams, countries, loading, error } = useDropdownData();
-  
+
   // Use TanStack Query for country-specific colleges
   const { data: countryColleges = [], isLoading: loadingColleges, error: countryCollegesError } = useCountryColleges(hoveredCountry);
   const { data: mobileCountryColleges = [], isLoading: mobileLoadingColleges, error: mobileCountryCollegesError } = useCountryColleges(expandedMobileCountry);
 
   // Filter colleges based on search
-  const filteredColleges = colleges.filter(college => 
+  const filteredColleges = colleges.filter(college =>
     college.name.toLowerCase().includes(collegeSearch.toLowerCase())
   );
 
   // Filter country colleges based on search
-  const filteredCountryColleges = countryColleges.filter(college => 
+  const filteredCountryColleges = countryColleges.filter(college =>
     college.name.toLowerCase().includes(countryCollegeSearch.toLowerCase())
   );
 
   // Mobile search results for colleges and exams
   const mobileSearchResults = {
-    colleges: colleges.filter(college => 
+    colleges: colleges.filter(college =>
       college.name.toLowerCase().includes(mobileSearchQuery.toLowerCase())
     ),
-    exams: exams.filter(exam => 
+    exams: exams.filter(exam =>
       exam.short_name.toLowerCase().includes(mobileSearchQuery.toLowerCase())
     )
   };
@@ -100,7 +108,7 @@ export default function Navbar() {
             <a href={`tel:${phones.primaryRaw}`} className="flex items-center gap-2.5 hover:text-green-400 transition-colors"><Phone size={16} /><span className="font-medium">{phones.primary}</span></a>
             <a href={`mailto:${emails.info}`} className="flex items-center gap-2.5 hover:text-green-400 transition-colors"><Mail size={16} /><span className="font-medium">{emails.info}</span></a>
           </div>
-          <div className="flex items-center gap-2.5 text-slate-300"><MapPin size={16} /><span className="font-medium">{address.office}</span></div>
+          <div className="flex items-center gap-2.5 text-slate-300"><MapPin size={16} /><span className="font-medium">{mounted ? address.office?.toString() || '' : ''}</span></div>
         </div>
       </div>
 
@@ -108,7 +116,13 @@ export default function Navbar() {
       <div className="border-b border-slate-100">
         <div className="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10">
           <div className="flex h-20 lg:h-24 items-center justify-between">
-            <Link href="/" className="flex-shrink-0"><img src={SITE_IDENTITY.assets.logo.main} alt="Logo" width={80} height={80} className="hover:opacity-80 transition-opacity" /></Link>
+            <Link href="/" className="shrink-0 flex items-center gap-2">
+              <Image src="/logo.png" alt="Logo" width={60} height={60} className="hover:opacity-80 transition-opacity" />
+              <div className="flex flex-col">
+                <span className="text-lg font-bold text-slate-900 leading-tight">Alpha World</span>
+                <span className="text-sm font-medium text-slate-600">Education</span>
+              </div>
+            </Link>
 
             {/* DESKTOP NAVIGATION */}
             <nav className="hidden lg:flex items-center space-x-2">
@@ -117,8 +131,8 @@ export default function Navbar() {
                   key={item.name}
                   className="relative py-2"
                   onMouseEnter={() => setHoveredItem(item.name)}
-                  onMouseLeave={() => { 
-                    setHoveredItem(null); 
+                  onMouseLeave={() => {
+                    setHoveredItem(null);
                     setHoveredCountry(null);
                     // Clear search when dropdown closes
                     if (item.name === 'Colleges') {
@@ -191,7 +205,11 @@ export default function Navbar() {
                                     type="text"
                                     placeholder="Search universities..."
                                     value={countryCollegeSearch}
-                                    onChange={(e) => setCountryCollegeSearch(e.target.value)}
+                                    onChange={(e) => {
+                                      e.preventDefault()
+                                      e.stopPropagation()
+                                      setCountryCollegeSearch(e.target.value)
+                                    }}
                                     className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                   />
                                   {countryCollegeSearch && (
@@ -259,7 +277,11 @@ export default function Navbar() {
                                   type="text"
                                   placeholder="Search colleges..."
                                   value={collegeSearch}
-                                  onChange={(e) => setCollegeSearch(e.target.value)}
+                                  onChange={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setCollegeSearch(e.target.value)
+                                  }}
                                   className="w-full pl-10 pr-4 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
                                 />
                                 {collegeSearch && (
@@ -273,7 +295,7 @@ export default function Navbar() {
                               </div>
                             </div>
                           )}
-                          
+
                           {/* College List */}
                           {(item.name === 'Colleges' ? filteredColleges : dropdownContent[item.name as keyof typeof dropdownContent]).map((dropdownItem: any) => (
                             <Link key={dropdownItem.title || dropdownItem.name} href={dropdownItem.href || `/colleges/${dropdownItem.slug}`} className="flex items-center justify-between px-4 py-2 text-sm font-bold text-slate-700 hover:bg-green-50 hover:text-green-600 transition-colors whitespace-nowrap">
@@ -283,7 +305,7 @@ export default function Navbar() {
                               </span>
                             </Link>
                           ))}
-                          
+
                           {/* No Results Message */}
                           {item.name === 'Colleges' && filteredColleges.length === 0 && collegeSearch && (
                             <div className="px-4 py-8 text-center text-slate-500">
@@ -323,6 +345,8 @@ export default function Navbar() {
                 placeholder="Search colleges and exams..."
                 value={mobileSearchQuery}
                 onChange={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
                   setMobileSearchQuery(e.target.value);
                   setShowMobileSearchResults(e.target.value.length > 0);
                 }}
@@ -341,7 +365,7 @@ export default function Navbar() {
                 </button>
               )}
             </div>
-            
+
             {/* MOBILE SEARCH RESULTS */}
             {showMobileSearchResults && mobileSearchQuery && (
               <div className="mt-4 bg-white border border-slate-200 rounded-xl shadow-lg max-h-80 overflow-y-auto">
@@ -389,7 +413,7 @@ export default function Navbar() {
                         )}
                       </div>
                     )}
-                    
+
                     {/* EXAMS SECTION */}
                     {mobileSearchResults.exams.length > 0 && (
                       <div>
@@ -447,12 +471,12 @@ export default function Navbar() {
                     className={`w-full py-4 text-lg font-bold border-b border-slate-50 transition-colors flex items-center justify-between ${isActive(item.href) ? "text-green-600 bg-green-50" : "text-slate-800 hover:bg-slate-50"}`}
                   >
                     <span>{item.name}</span>
-                    <ChevronDown 
-                      size={20} 
+                    <ChevronDown
+                      size={20}
                       className={`transition-transform duration-200 ${expandedMobileItem === item.name ? 'rotate-180' : ''}`}
                     />
                   </button>
-                  
+
                   {/* MOBILE DROPDOWN CONTENT */}
                   {expandedMobileItem === item.name && (
                     <div className="bg-slate-50 border-b border-slate-100">
@@ -478,19 +502,19 @@ export default function Navbar() {
                                   {dropdownItem.flag && <span className="text-lg">{dropdownItem.flag}</span>}
                                   <span>{dropdownItem.title}</span>
                                 </span>
-                                <ChevronRight 
-                                  size={16} 
+                                <ChevronRight
+                                  size={16}
                                   className={`transition-transform duration-200 ${expandedMobileCountry === dropdownItem.slug ? 'rotate-90' : ''}`}
                                 />
                               </button>
-                              
+
                               {/* MOBILE COUNTRY COLLEGES */}
                               {expandedMobileCountry === dropdownItem.slug && showMobileColleges === dropdownItem.slug && (
                                 <div className="bg-white border-l-4 border-green-500">
                                   <div className="px-6 py-2 bg-green-50 border-b border-green-100">
                                     <span className="text-xs font-bold text-green-700 uppercase tracking-wider">Universities in {dropdownItem.title.replace('Study in ', '')}</span>
                                   </div>
-                                  
+
                                   {mobileLoadingColleges ? (
                                     <div className="px-6 py-4 text-sm text-slate-500 flex items-center gap-2 justify-center">
                                       <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin"></div>
@@ -517,7 +541,7 @@ export default function Navbar() {
                                       <p className="text-xs font-medium">No universities found</p>
                                     </div>
                                   )}
-                                  
+
                                   {mobileCountryColleges.length > 0 && (
                                     <div className="px-6 py-2 bg-slate-50 border-t border-slate-100">
                                       <Link
