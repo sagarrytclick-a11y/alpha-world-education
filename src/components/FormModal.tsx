@@ -2,7 +2,7 @@
 
 import React from 'react'
 import { useFormModal } from '@/context/FormModalContext'
-import { X } from 'lucide-react' // Using lucide for a cleaner icon if available
+import { X, Send } from 'lucide-react'
 
 export const FormModal: React.FC = () => {
   const { isOpen, closeModal, formData, updateFormData, resetForm } = useFormModal()
@@ -12,6 +12,7 @@ export const FormModal: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    e.stopPropagation()
     setIsSubmitting(true)
     setSubmitStatus('idle')
 
@@ -55,7 +56,11 @@ export const FormModal: React.FC = () => {
       {/* Backdrop - Darker for better contrast with the white modal */}
       <div 
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-md"
-        onClick={handleClose}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          handleClose()
+        }}
       />
       
       {/* Modal */}
@@ -68,7 +73,11 @@ export const FormModal: React.FC = () => {
             <p className="text-xs sm:text-sm font-medium text-slate-500">We&apos;ll get back to you shortly.</p>
           </div>
           <button
-            onClick={handleClose}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              handleClose()
+            }}
             className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl p-2 transition-all"
           >
             <X className="w-6 h-6" />
@@ -76,7 +85,11 @@ export const FormModal: React.FC = () => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 sm:space-y-5">
+        <form 
+          onSubmit={handleSubmit} 
+          className="p-6 sm:p-8 space-y-4 sm:space-y-5"
+          noValidate
+        >
           {[
             { id: 'name', label: 'Full Name', type: 'text', placeholder: 'Name', value: formData.name },
             { id: 'email', label: 'Email Address', type: 'email', placeholder: 'example@gmail.com', value: formData.email },
@@ -92,7 +105,11 @@ export const FormModal: React.FC = () => {
                 id={field.id}
                 required
                 value={field.value}
-                onChange={(e) => updateFormData({ [field.id]: e.target.value })}
+                onChange={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  updateFormData({ [field.id]: e.target.value })
+                }}
                 className="w-full px-4 sm:px-5 py-3 bg-slate-50 border border-slate-200 rounded-xl sm:rounded-2xl text-slate-900 placeholder:text-slate-400 focus:ring-4 focus:ring-green-500/10 focus:border-green-500 focus:bg-white outline-none transition-all font-medium text-sm sm:text-base"
                 placeholder={field.placeholder}
               />
@@ -116,9 +133,13 @@ export const FormModal: React.FC = () => {
           <div className="flex gap-4 pt-4">
             <button
               type="button"
-              onClick={handleClose}
               disabled={isSubmitting}
               className="flex-1 px-6 py-4 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-2xl transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                handleClose()
+              }}
             >
               Cancel
             </button>
@@ -133,7 +154,10 @@ export const FormModal: React.FC = () => {
                   Sending...
                 </>
               ) : (
-                'Submit'
+                <>
+                  <Send className="w-4 h-4" />
+                  Submit
+                </>
               )}
             </button>
           </div>

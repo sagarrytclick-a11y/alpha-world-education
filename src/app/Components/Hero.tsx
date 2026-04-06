@@ -4,19 +4,20 @@ import React from 'react';
 import { ArrowRight, Play, Star, ShieldCheck, GraduationCap, Sparkles, CheckCircle2, Globe2 } from 'lucide-react';
 import Link from 'next/link';
 import { useFormModal } from '@/context/FormModalContext';
+import FloatingWhatsApp from './FloatingWhatsApp';
 
 const Hero: React.FC = () => {
   const { openModal } = useFormModal();
 
   return (
     <section id="home" className="relative min-h-[90vh] lg:min-h-screen flex items-center bg-[#FDFDFD] pt-28 pb-20 overflow-hidden">
-      
+
       {/* --- ELITE BACKGROUND DESIGN --- */}
       <div className="absolute inset-0 overflow-hidden -z-10">
         {/* Animated Mesh Gradient */}
         <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-gradient-to-br from-green-50 to-emerald-50/50 rounded-full blur-[120px] animate-pulse" />
         <div className="absolute bottom-[-5%] right-[-5%] w-[50%] h-[50%] bg-gradient-to-tr from-blue-50 to-indigo-50/30 rounded-full blur-[100px]" />
-        
+
         {/* Sophisticated Grid Overlay */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:44px_44px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)]" />
       </div>
@@ -26,13 +27,13 @@ const Hero: React.FC = () => {
 
           {/* LEFT COLUMN: Content */}
           <div className="lg:col-span-7 flex flex-col items-center lg:items-start text-center lg:text-left">
-            
+
             {/* Ultra-Modern Trust Badge */}
             <div className="group inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-white shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)] border border-slate-100 mb-8 transition-transform hover:scale-105">
               <div className="flex -space-x-3">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-slate-${i+1}00 shadow-sm overflow-hidden`}>
-                    <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="student" />
+                  <div key={i} className={`w-8 h-8 rounded-full border-2 border-white bg-slate-${i + 1}00 shadow-sm overflow-hidden`}>
+                    <img src={`https://i.pravatar.cc/100?img=${i + 10}`} alt="student" />
                   </div>
                 ))}
               </div>
@@ -44,17 +45,24 @@ const Hero: React.FC = () => {
 
             {/* Cinematic Heading */}
             <h1 className="text-5xl sm:text-6xl xl:text-[70px] font-black text-slate-900 leading-[0.9] tracking-tight mb-8">
-  Study Abroad. <br />
-  <span className="relative">
-    No Compromise.
-    <span className="absolute -bottom-2 left-0 w-full h-3 bg-green-400/20 -z-10 rounded-full" />
-  </span>
-</h1>
+              Study Abroad. <br />
+              <span className="relative">
+                USA • UK • Canada • Australia
+                <span className="absolute -bottom-2 left-0 w-full h-3 bg-green-400/20 -z-10 rounded-full" />
+              </span>
+            </h1>
 
             <div className="flex flex-col sm:flex-row items-center gap-6 mb-10 max-w-2xl">
               <p className="text-lg text-slate-500 leading-relaxed font-medium">
-                We don’t just process applications; we architect <span className="text-slate-900 font-bold">global careers</span> through personalized university placement and end-to-end visa strategy.
+                Your gateway to prestigious universities in <span className="text-slate-900 font-bold">top study destinations</span>. We don't just process applications; we architect global careers through personalized university placement and end-to-end visa strategy.
               </p>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">USA</span>
+                <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-bold">UK</span>
+                <span className="px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">Canada</span>
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Australia</span>
+                <span className="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-bold">+35 Countries</span>
+              </div>
             </div>
 
             {/* High-Conversion CTA Group */}
@@ -63,12 +71,13 @@ const Hero: React.FC = () => {
                 <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
                 <span className="relative flex items-center gap-2">
                   Find Your University <ArrowRight size={20} />
+
                 </span>
               </Link>
 
               <button onClick={openModal} className="flex items-center gap-4 px-8 py-5 rounded-2xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all hover:shadow-xl">
-                 <Play size={18} fill="currentColor" className="text-green-400" />
-                 Get Free Roadmap
+                <Play size={18} fill="currentColor" className="text-green-400" />
+                Get Free Roadmap
               </button>
             </div>
 
@@ -95,18 +104,18 @@ const Hero: React.FC = () => {
           {/* RIGHT COLUMN: The Visual Composition */}
           <div className="lg:col-span-5 relative mt-12 lg:mt-0">
             <div className="relative w-full max-w-[500px] mx-auto">
-              
+
               {/* The "Main Stage" - Large Image with Organic Shape */}
               <div className="relative z-10 group">
                 <div className="absolute -inset-4 bg-gradient-to-tr from-green-200 to-blue-200 rounded-[4rem] blur-2xl opacity-30 group-hover:opacity-50 transition-opacity" />
-                
+
                 <div className="relative rounded-[3.5rem] border-[12px] border-white shadow-2xl overflow-hidden aspect-[1/1.2]">
                   <img
                     src="/Hero/herosection.png"
                     alt="International Student"
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                   />
-                  
+
                   {/* Glass Card Over Image */}
                   <div className="absolute bottom-6 left-6 right-6 p-6 rounded-3xl bg-white/20 backdrop-blur-xl border border-white/30 text-white">
                     <div className="flex justify-between items-end">
@@ -124,7 +133,7 @@ const Hero: React.FC = () => {
 
               {/* Floaties: Designed to look like UI elements */}
               <div className="absolute -top-10 -right-10 z-20 animate-float">
-                <div className="bg-white p-4 rounded-3xl shadow-2xl border border-slate-50 flex items-center gap-4">
+                <div className="bg-white p-4 rounded-3xl shadow-2xl flex items-center gap-4">
                   <div className="w-12 h-12 bg-amber-50 rounded-2xl flex items-center justify-center">
                     <Star size={24} className="text-amber-500 fill-amber-500" />
                   </div>
@@ -138,10 +147,10 @@ const Hero: React.FC = () => {
               {/* Decorative Geometric Elements */}
               <div className="absolute -bottom-6 -left-10 z-20 bg-slate-900 text-white p-5 rounded-3xl shadow-2xl rotate-[-4deg] animate-float-delayed">
                 <div className="flex items-center gap-3">
-                   <div className="p-2 bg-green-500 rounded-lg">
+                  <div className="p-2 bg-green-500 rounded-lg">
                     <ShieldCheck size={18} />
-                   </div>
-                   <span className="text-sm font-bold tracking-tight">ISO Certified Consultancy</span>
+                  </div>
+                  <span className="text-sm font-bold tracking-tight">ISO Certified Consultancy</span>
                 </div>
               </div>
 
@@ -150,6 +159,8 @@ const Hero: React.FC = () => {
 
         </div>
       </div>
+
+      <FloatingWhatsApp />
 
       <style jsx>{`
         @keyframes float {

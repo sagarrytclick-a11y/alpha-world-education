@@ -74,8 +74,8 @@ export const metadata: Metadata = {
     images: [SITE_IDENTITY.meta.ogImage || SITE_IDENTITY.assets.logo.main],
   },
   icons: {
-    icon: SITE_IDENTITY.assets.logo.favicon,
-    apple: SITE_IDENTITY.assets.logo.appleTouchIcon,
+    icon: '/favicon.ico',
+    apple: '/favicon.ico',
   },
   manifest: "/manifest.json",
 };

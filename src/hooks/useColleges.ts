@@ -1,5 +1,4 @@
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
-
 interface College {
   _id: string
   name: string
@@ -68,11 +67,11 @@ interface CollegesResponse {
 }
 
 // Fetch colleges with pagination and filters
-const fetchColleges = async ({ 
-  pageParam = 1, 
-  search = '', 
-  country = '', 
-  exam = '' 
+const fetchColleges = async ({
+  pageParam = 1,
+  search = '',
+  country = '',
+  exam = ''
 }): Promise<CollegesResponse> => {
   const params = new URLSearchParams({
     page: pageParam.toString(),
@@ -86,12 +85,12 @@ const fetchColleges = async ({
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
-  
+
   const result = await response.json()
   if (!result.success) {
     throw new Error(result.message || 'Failed to fetch colleges')
   }
-  
+
   return {
     colleges: result.data.colleges || [],
     total: result.data.total || 0,
@@ -110,12 +109,12 @@ const fetchCollegeBySlug = async (slug: string): Promise<College> => {
     }
     throw new Error(`HTTP error! status: ${response.status}`)
   }
-  
+
   const result = await response.json()
   if (!result.success) {
     throw new Error(result.message || 'Failed to fetch college')
   }
-  
+
   return result.data
 }
 
@@ -123,11 +122,11 @@ const fetchCollegeBySlug = async (slug: string): Promise<College> => {
 export function useInfiniteColleges(search: string, country: string, exam: string) {
   return useInfiniteQuery({
     queryKey: ['colleges', 'infinite', search, country, exam],
-    queryFn: ({ pageParam = 1 }) => fetchColleges({ 
-      pageParam, 
-      search, 
-      country, 
-      exam 
+    queryFn: ({ pageParam = 1 }) => fetchColleges({
+      pageParam,
+      search,
+      country,
+      exam
     }),
     getNextPageParam: (lastPage) => {
       return lastPage.hasMore ? lastPage.page + 1 : undefined
@@ -144,12 +143,12 @@ export function useInfiniteColleges(search: string, country: string, exam: strin
 export function useColleges(search: string, country: string, exam: string, page: number, limit: number = 12) {
   return useQuery({
     queryKey: ['colleges', 'paginated', search, country, exam, page, limit],
-    queryFn: () => fetchCollegesWithLimit({ 
-      search, 
-      country, 
-      exam, 
-      page, 
-      limit 
+    queryFn: () => fetchCollegesWithLimit({
+      search,
+      country,
+      exam,
+      page,
+      limit
     }),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
@@ -159,9 +158,9 @@ export function useColleges(search: string, country: string, exam: string, page:
 }
 
 // Fetch colleges with custom limit and pagination
-const fetchCollegesWithLimit = async ({ 
-  search = '', 
-  country = '', 
+const fetchCollegesWithLimit = async ({
+  search = '',
+  country = '',
   exam = '',
   page = 1,
   limit = 12
@@ -178,12 +177,12 @@ const fetchCollegesWithLimit = async ({
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`)
   }
-  
+
   const result = await response.json()
   if (!result.success) {
     throw new Error(result.message || 'Failed to fetch colleges')
   }
-  
+
   return {
     colleges: result.data.colleges || [],
     total: result.data.total || 0,
@@ -199,8 +198,8 @@ export function useCollege(slug: string) {
     queryKey: ['college', slug],
     queryFn: () => fetchCollegeBySlug(slug),
     enabled: !!slug,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-    gcTime: 30 * 60 * 1000, // 30 minutes
+    staleTime: 10 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 2,
     refetchOnWindowFocus: false,
   })
@@ -215,12 +214,12 @@ export function useCollegeFilters() {
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`)
       }
-      
+
       const result = await response.json()
       if (!result.success) {
         throw new Error(result.message || 'Failed to fetch filters')
       }
-      
+
       return result.data
     },
     staleTime: 15 * 60 * 1000, // 15 minutes
@@ -228,3 +227,4 @@ export function useCollegeFilters() {
     retry: 2,
   })
 }
+
