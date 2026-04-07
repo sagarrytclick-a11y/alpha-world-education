@@ -226,7 +226,7 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="bg-white">
       {/* Hero Section */}
       <div className="relative min-h-[400px] sm:min-h-[500px] bg-slate-50 overflow-hidden py-8 sm:py-12 md:py-20">
         {/* Abstract background shapes for "Flow" feel */}
@@ -363,17 +363,17 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
         </div>
       </div>
 
-      {/* Navigation Tab Bar */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-lg">
+      {/* Navigation Tab Bar - Fixed positioning */}
+      <div className="sticky top-0 left-0 right-0 z-50 w-full bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-lg">
         <div className="max-w-none px-0 sm:px-0 md:px-0 lg:px-0">
-          <div className="flex items-center justify-center gap-1 py-2 sm:py-3 overflow-x-auto scrollbar-hide scroll-smooth">
+          <div className="flex items-center justify-start sm:justify-center gap-1 py-2 sm:py-3 px-2 sm:px-4 overflow-x-auto scrollbar-hide scroll-smooth">
             {[
               { name: 'Overview', id: 'overview' },
               { name: 'Key Highlights', id: 'key-highlights' },
+              { name: 'Eligibility', id: 'entrance-exams' },
               { name: 'Why Choose ?', id: 'why-choose' },
               { name: 'Ranking', id: 'ranking' },
               { name: 'Admission Process', id: 'admission-process' },
-              { name: 'Eligibility', id: 'entrance-exams' },
               { name: 'Documents', id: 'documents-required' },
               { name: 'Fees', id: 'fees-structure' },
               { name: 'Campus', id: 'campus-highlights' },
@@ -386,9 +386,7 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
                     element.scrollIntoView({ behavior: 'smooth', block: 'start' });
                   }
                 }}
-                className={`flex items-center gap-2 px-4 sm:px-4 md:px-4 lg:px-6 py-2.5 text-sm font-semibold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap group relative overflow-hidden shrink-0 min-w-max ${activeTab === tab.id
-                  && 'text-white bg-green-600 border border-green-200'
-                  }`}
+                className={`flex items-center gap-2 px-4 sm:px-4 md:px-4 lg:px-6 py-2.5 text-sm font-semibold rounded-lg sm:rounded-xl transition-all duration-300 whitespace-nowrap group relative overflow-hidden shrink-0 min-w-max ${activeTab === tab.id ? 'text-white bg-green-600 border border-green-200' : 'text-slate-600 hover:text-green-600 hover:bg-green-50'}`}
               >
                 <span className="relative z-10 text-sm">
                   {tab.name}
@@ -401,8 +399,8 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-8 sm:py-12">
+      {/* Main Content - pt added for fixed nav spacing */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 pt-24 sm:pt-28 lg:pt-36 pb-8 sm:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
@@ -1234,7 +1232,7 @@ const CollegeDetailPage: React.FC<CollegeDetailPageProps> = ({ slug }) => {
           </div>
 
           {/* Right Column - CTA and Related */}
-          <div className="space-y-6 lg:sticky lg:top-24 lg:h-fit">
+          <div className="space-y-6 lg:sticky lg:top-45 lg:h-fit">
             {/* CTA Card */}
             <Card className="border-none shadow-lg rounded-2xl overflow-hidden bg-gradient-to-br from-green-600 to-emerald-700 text-white">
               <CardContent className="p-8">
