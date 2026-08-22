@@ -75,9 +75,9 @@ export const SITE_IDENTITY: SiteIdentity = {
   },
   contact: {
     phone: {
-      display: "+91-6239311536",
-      raw: "+916239311536",
-      additional: ["+91-9810718430", "+91-9310134887"]
+      display: "+91-9310134887",
+      raw: "+919310134887",
+      additional: ["+91-9310134887", "+91-9310134887"]
     },
     email: {
       support: "Info@alphaworldeducation.com",
@@ -91,7 +91,7 @@ export const SITE_IDENTITY: SiteIdentity = {
       mapLink: "https://goo.gl/maps/example",
     },
     socials: {
-      whatsapp: "https://wa.me/916239311536",
+      whatsapp: "https://wa.me/919310134887",
       instagram: "https://instagram.com/alphaworldeducation",
       linkedin: "https://linkedin.com/company/alphaworldeducation",
     },
